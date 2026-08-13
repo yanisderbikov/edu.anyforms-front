@@ -6,7 +6,7 @@ import styles from './Header.module.css';
    progress: { scroll: 0..100, done, total } — трекинг внутри модуля:
    тонкая полоска-прогресс по низу шапки + счётчик пройденных уроков. */
 const Header = ({ right = null, progress = null }) => (
-  <header className={styles.header}>
+  <header className={`${styles.header} ${progress ? styles.hasProgress : ''}`}>
     <div className={styles.inner}>
       {progress && (
         <span

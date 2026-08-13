@@ -65,7 +65,7 @@ const ModulePage = () => {
         }
       />
 
-      <main className={`container ${styles.main}`}>
+      <main className={styles.main}>
         <Link to="/" className={styles.backLink}>
           ← Все модули
         </Link>

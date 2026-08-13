@@ -4,10 +4,11 @@
 }
 
 .main {
+  width: 100%;
   max-width: 880px;
-  padding-top: 72px;
-  /* Большой «выдох» внизу, чтобы было ясно: это конец страницы */
-  padding-bottom: 40vh;
+  margin: 0 auto;
+  /* Отступ от шапки и «выдох» внизу, чтобы был виден конец страницы */
+  padding: 56px var(--edge) 22vh;
 }
 
 .backLink {

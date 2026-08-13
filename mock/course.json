@@ -2,8 +2,8 @@
   "course": {
     "id": "molds-course",
     "title": "Производство форм",
-    "subtitle": "От идеи до готовой формы: проектирование, оснастка, изготовление",
-    "modulesCount": 3
+    "subtitle": "От идеи до готовой формы: проектирование, печать, обработка и заливка силикона",
+    "modulesCount": 4
   },
   "support": {
     "chatLabel": "Чат курса",
@@ -16,70 +16,116 @@
       "id": "design",
       "order": 1,
       "title": "Проектирование",
-      "description": "Учимся придумывать и моделировать форму: от эскиза до готовой 3D-модели, которую можно печатать.",
+      "description": "Проектируем оснастку в Blender: от мастер-модели до удобной рабочей формы.",
+      "image": "/modules/design.jpeg",
+      "points": [
+        "Разберёмся в программе Blender",
+        "Спроектируем профессиональную оснастку для заливки силиконом",
+        "Спроектируем конечную удобную оснастку для работы с формой"
+      ],
       "status": "open",
       "opensAt": null,
       "lessons": [
         {
           "id": "design-1",
-          "title": "Знакомство с инструментами",
-          "description": "Разбираем, в чём будем работать: программы для моделирования, что поставить и как настроить рабочее место.",
+          "title": "Знакомство с Blender",
+          "description": "Разбираемся в интерфейсе Blender и готовим рабочее место: что поставить и как настроить.",
           "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
         },
         {
           "id": "design-2",
-          "title": "Первая модель формы",
-          "description": "Пошагово моделируем простую форму: габариты, толщины стенок, уклоны и допуски под литьё.",
+          "title": "Оснастка для заливки силиконом",
+          "description": "Проектируем профессиональную оснастку для заливки: габариты, толщины стенок, уклоны и допуски.",
           "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
         },
         {
           "id": "design-3",
-          "title": "Подготовка к печати",
-          "description": "Экспорт модели, слайсинг и типичные ошибки, из-за которых форма не получается с первого раза.",
+          "title": "Удобная оснастка для работы с формой",
+          "description": "Проектируем конечную оснастку, с которой удобно работать каждый день.",
           "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
         }
       ]
     },
     {
-      "id": "tooling",
+      "id": "print",
       "order": 2,
-      "title": "Оснастка",
-      "description": "Печатаем и собираем оснастку: мастер-модели, опалубка и всё, что нужно до заливки силикона.",
+      "title": "Печать",
+      "description": "Печатаем мастер-модель и оснастку: SLA, FDM, оборудование и настройки.",
+      "image": "/modules/print.jpeg",
+      "points": [
+        "SLA для мастер-модели, FDM для оснастки",
+        "Какое оборудование подойдёт",
+        "Настройки печати и как ускорить процесс"
+      ],
       "status": "locked",
       "opensAt": "2026-09-01",
       "lessons": [
         {
-          "id": "tooling-1",
-          "title": "Мастер-модель и опалубка",
-          "description": "Готовим мастер-модель и собираем опалубку под заливку.",
+          "id": "print-1",
+          "title": "SLA и FDM: что для чего",
+          "description": "SLA для мастер-модели, FDM для оснастки: почему так и какое оборудование подойдёт.",
           "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
         },
         {
-          "id": "tooling-2",
-          "title": "Постобработка печати",
-          "description": "Шлифовка, грунтовка и подготовка поверхности, чтобы форма получилась гладкой.",
+          "id": "print-2",
+          "title": "Настройки печати",
+          "description": "Настройки печати и приёмы, которые ускоряют процесс без потери качества.",
           "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
         }
       ]
     },
     {
-      "id": "production",
+      "id": "finishing",
       "order": 3,
-      "title": "Изготовление",
-      "description": "Заливаем силикон и получаем готовую форму: материалы, пропорции, дегазация и разбор ошибок.",
+      "title": "Ручная обработка",
+      "description": "Доводим мастер-модель до идеала: расходники, приёмы и критерии качества.",
+      "image": "/modules/finishing.jpeg",
+      "points": [
+        "Как обработать мастер-модель",
+        "Какие расходники использовать",
+        "Что считается приемлемым результатом в зависимости от задачи"
+      ],
       "status": "locked",
       "opensAt": "2026-09-15",
       "lessons": [
         {
-          "id": "production-1",
-          "title": "Выбор силикона",
+          "id": "finishing-1",
+          "title": "Обработка мастер-модели",
+          "description": "Как обработать мастер-модель и какие расходники использовать.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        },
+        {
+          "id": "finishing-2",
+          "title": "Критерии качества",
+          "description": "Что считается приемлемым результатом в зависимости от задачи.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        }
+      ]
+    },
+    {
+      "id": "casting",
+      "order": 4,
+      "title": "Заливка силикона",
+      "description": "Заливаем форму: подбор силикона, управление схватыванием и оборудование.",
+      "image": "/modules/casting.jpeg",
+      "points": [
+        "Подбор силикона",
+        "Как ускорить / замедлить процесс схватывания",
+        "Подбор оборудования: весы и камера дегазации"
+      ],
+      "status": "locked",
+      "opensAt": "2026-10-01",
+      "lessons": [
+        {
+          "id": "casting-1",
+          "title": "Подбор силикона",
           "description": "Какие бывают силиконы, чем отличаются и что выбрать под вашу задачу.",
           "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
         },
         {
-          "id": "production-2",
-          "title": "Заливка и дегазация",
-          "description": "Смешиваем, дегазируем и заливаем силикон. Разбираем частые ошибки: пузыри, непролив, отрыв.",
+          "id": "casting-2",
+          "title": "Схватывание и оборудование",
+          "description": "Как ускорить или замедлить схватывание. Подбор оборудования: весы и камера дегазации.",
           "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
         }
       ]

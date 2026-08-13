@@ -23,29 +23,13 @@
   align-items: center;
 }
 
-/* Заглушка под картинку-инструкцию (стиль плейсхолдеров с лендинга) */
-.ph {
-  position: relative;
+/* Статичное фото формы (не видео — оно отвлекало от входа) */
+.heroImage {
   width: 100%;
-  background: var(--panel);
-  border: 2px dashed rgba(255, 255, 255, 0.25);
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 28px 24px;
   aspect-ratio: 16 / 12;
-}
-
-.phLabel {
-  font-weight: 600;
-  font-size: var(--fs-small);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  line-height: 1.35;
-  max-width: 26ch;
+  object-fit: cover;
+  background: var(--panel);
+  border-radius: var(--radius);
 }
 
 .formCol {
@@ -98,7 +82,7 @@
     gap: 64px;
   }
 
-  .ph {
+  .heroImage {
     order: -1;
   }
 }

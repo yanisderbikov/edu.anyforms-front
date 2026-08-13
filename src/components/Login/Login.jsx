@@ -18,6 +18,15 @@ const ArrowIcon = () => (
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 
+/* Приветствие по локальному времени пользователя */
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Доброе утро';
+  if (hour >= 12 && hour < 18) return 'Добрый день';
+  if (hour >= 18 && hour < 23) return 'Добрый вечер';
+  return 'Доброй ночи';
+};
+
 const Login = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState('email'); // 'email' | 'code'
@@ -53,12 +62,13 @@ const Login = () => {
       <Header />
       <main className={styles.main}>
         <div className={styles.grid}>
-          {/* Слева — картинка-подсказка, как войти (пока заглушка) */}
-          <div className={styles.ph} aria-hidden="true">
-            <span className={styles.phLabel}>
-              Картинка: вводишь e-mail — получаешь код на почту — входишь
-            </span>
-          </div>
+          {/* Слева — статичное фото, чтобы не отвлекать от формы входа */}
+          <img
+            className={styles.heroImage}
+            src="/login.jpeg"
+            alt=""
+            aria-hidden="true"
+          />
 
           <div className={styles.formCol}>
             <span className="eyebrow">Вход на платформу</span>
@@ -66,10 +76,10 @@ const Login = () => {
             {step === 'email' ? (
               <>
                 <h1 className={`h2 ${styles.title}`}>
-                  Привет! <span className="hAccent">Войди</span>, чтобы начать
+                  {getGreeting()}! <span className="hAccent">Войдите</span>, чтобы начать
                 </h1>
                 <p className="lead">
-                  Введи e-mail, на который куплен курс, — мы пришлём код для входа.
+                  Введите e-mail, на который куплен курс, — мы пришлём код для входа.
                 </p>
                 <form className={styles.form} onSubmit={submitEmail}>
                   <input
@@ -95,7 +105,7 @@ const Login = () => {
                   Код <span className="hAccent">на почте</span>
                 </h1>
                 <p className="lead">
-                  Отправили код на <b>{email}</b>. Вставь его сюда, чтобы войти.
+                  Отправили код на <b>{email}</b>. Вставьте его сюда, чтобы войти.
                 </p>
                 <form className={styles.form} onSubmit={submitCode}>
                   <input

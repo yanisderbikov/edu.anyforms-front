@@ -1,14 +1,37 @@
 .page {
-  min-height: 100vh;
+  /* Ровно высота экрана: контент скроллится внутри, футер с кнопками
+     всегда на одном месте — ничего не скачет между слайдами */
+  height: 100vh;
   padding-top: var(--header-h);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+/* Завершение онбординга: контент улетает вверх, потом переход на главную */
+.pageFinishing .main,
+.pageFinishing .footer {
+  animation: flyUp 0.42s cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+.pageFinishing .footer {
+  animation-delay: 0.05s;
+}
+
+@keyframes flyUp {
+  to {
+    opacity: 0;
+    transform: translateY(-12vh);
+  }
 }
 
 .main {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   width: 100%;
-  max-width: 880px;
+  /* Одна ширина у слайдов и футера — заголовок и кнопки на одной левой линии */
+  max-width: var(--max-w);
   margin: 0 auto;
   padding: 48px var(--edge) 24px;
   display: flex;
@@ -16,17 +39,129 @@
   justify-content: center;
   align-items: flex-start;
   gap: 22px;
-  animation: fadeIn 0.35s ease;
 }
 
-@keyframes fadeIn {
+/* Если контент выше экрана (мобилка с фото) — центрирование отключается,
+   иначе flex обрезал бы верх при скролле */
+.main > *:first-child {
+  margin-top: auto;
+}
+
+.main > *:last-child {
+  margin-bottom: auto;
+}
+
+/* Фото модуля: на мобилке — между заголовком и описанием */
+.image {
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--panel);
+  margin: 8px 0;
+}
+
+@media (min-width: 900px) {
+  /* ПК: текст слева, фото — правая половина экрана, квадратное */
+  .withImage {
+    max-width: var(--max-w);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 56px;
+    align-content: center;
+    align-items: start;
+    row-gap: 22px;
+  }
+
+  .withImage > * {
+    grid-column: 1;
+  }
+
+  .withImage .image {
+    grid-column: 2;
+    grid-row: 1 / span 6;
+    align-self: center;
+    justify-self: end;
+    width: 100%;
+    max-width: min(100%, calc(100vh - var(--header-h) - 240px));
+    aspect-ratio: 1 / 1;
+    margin: 0;
+  }
+}
+
+/* ── Анимация перехода между слайдами ──
+   Вперёд: старый уезжает влево, новый въезжает справа (назад — зеркально).
+   Элементы нового слайда появляются каскадом, друг за другом. */
+
+.enterRight > * {
+  animation: inFromRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.enterLeft > * {
+  animation: inFromLeft 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.enterRight > *:nth-child(2),
+.enterLeft > *:nth-child(2) {
+  animation-delay: 0.09s;
+}
+
+.enterRight > *:nth-child(3),
+.enterLeft > *:nth-child(3) {
+  animation-delay: 0.18s;
+}
+
+.enterRight > *:nth-child(4),
+.enterLeft > *:nth-child(4) {
+  animation-delay: 0.27s;
+}
+
+.enterRight > *:nth-child(5),
+.enterLeft > *:nth-child(5) {
+  animation-delay: 0.36s;
+}
+
+.leaveLeft {
+  animation: outToLeft 0.26s ease both;
+}
+
+.leaveRight {
+  animation: outToRight 0.26s ease both;
+}
+
+@keyframes inFromRight {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(56px);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes inFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-56px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes outToLeft {
+  to {
+    opacity: 0;
+    transform: translateX(-56px);
+  }
+}
+
+@keyframes outToRight {
+  to {
+    opacity: 0;
+    transform: translateX(56px);
   }
 }
 
@@ -36,6 +171,31 @@
 
 .note {
   max-width: 52ch;
+}
+
+.points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.point {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: var(--fs-lead);
+  line-height: 1.35;
+  color: var(--text-dim);
+  max-width: 52ch;
+}
+
+.pointArrow {
+  flex: none;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .links {
@@ -51,7 +211,7 @@
 
 .footer {
   width: 100%;
-  max-width: 880px;
+  max-width: var(--max-w);
   margin: 0 auto;
   padding: 0 var(--edge) 40px;
   display: flex;
@@ -80,9 +240,10 @@
 .controls {
   display: flex;
   align-items: center;
-  gap: 18px;
 }
 
+/* «Назад» на первом слайде схлопнута в ноль — «Далее» стоит слева.
+   Со второго слайда она плавно разъезжается, сдвигая «Далее» вправо. */
 .backBtn {
   background: none;
   border: none;
@@ -91,6 +252,21 @@
   font-family: var(--font);
   font-size: 15px;
   padding: 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 0;
+  margin-right: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: max-width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-right 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease 0.08s;
+}
+
+.backBtnVisible {
+  max-width: 120px;
+  margin-right: 22px;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .backBtn:hover {

@@ -95,14 +95,14 @@ const Home = () => {
     <div className={styles.page}>
       <Header right={account} />
 
-      <main className={`container ${styles.main}`}>
+      <main className={styles.main}>
         {error && <p className={styles.error}>{error}</p>}
         {!data && !error && <p className={styles.loading}>Загружаем курс…</p>}
 
         {data && (
           <>
             <div className={styles.head}>
-              <span className="eyebrow eyebrowAccent">Твой курс</span>
+              <span className="eyebrow eyebrowAccent">Ваш курс</span>
               <h1 className="h2">
                 {data.course.title.split(' ')[0]}{' '}
                 <span className="hAccent">

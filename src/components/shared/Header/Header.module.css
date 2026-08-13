@@ -98,8 +98,14 @@
 }
 
 @media (max-width: 640px) {
+  /* На телефоне в модуле места мало: логотип скрываем,
+     остаются чип прогресса слева и иконки справа */
+  .hasProgress .logoLink {
+    display: none;
+  }
+
   .lessonsChip {
-    font-size: 10px;
-    padding: 6px 10px;
+    font-size: 11px;
+    padding: 7px 12px;
   }
 }

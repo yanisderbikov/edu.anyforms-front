@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
 import { finishOnboarding } from '../../auth';
@@ -30,7 +30,7 @@ const buildSlides = (data) => {
       eyebrow: 'Добро пожаловать',
       title: (
         <>
-          Рады видеть тебя на курсе{' '}
+          Рады видеть вас на курсе{' '}
           <span className="hAccent">«{title}»</span>
         </>
       ),
@@ -50,7 +50,8 @@ const buildSlides = (data) => {
       key: m.id,
       eyebrow: `Модуль ${i + 1}`,
       title: <span className="hAccent">{m.title}</span>,
-      note: m.description,
+      points: m.points,
+      image: m.image,
     })),
     {
       key: 'support',
@@ -60,7 +61,7 @@ const buildSlides = (data) => {
           Мы всегда <span className="hAccent">на связи</span>
         </>
       ),
-      note: 'Вопрос по уроку или что-то не работает — пиши, отвечаем быстро.',
+      note: 'Вопрос по уроку или что-то не работает — пишите, отвечаем быстро.',
       links: support && [
         { label: support.chatLabel, url: support.chatUrl },
         { label: support.supportLabel, url: support.supportUrl },
@@ -74,16 +75,23 @@ const buildSlides = (data) => {
           Ну что, <span className="hAccent">поехали?</span>
         </>
       ),
-      note: 'Первый модуль уже открыт и ждёт тебя.',
+      note: 'Первый модуль уже открыт и ждёт вас.',
       isLast: true,
     },
   ];
 };
 
+const SLIDE_MS = 260; // длительность анимации ухода слайда (синхронно с CSS)
+const FINISH_MS = 420; // длительность «улёта» при завершении онбординга (синхронно с CSS)
+
 const Onboarding = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [index, setIndex] = useState(0);
+  const [dir, setDir] = useState(1); // 1 — вперёд, -1 — назад
+  const [leaving, setLeaving] = useState(false);
+  const [finishing, setFinishing] = useState(false); // онбординг закрывается — всё улетает вверх
+  const touchStart = useRef(null);
 
   useEffect(() => {
     fetchCourse().then(setData).catch(() => setData({}));
@@ -92,22 +100,89 @@ const Onboarding = () => {
   const slides = useMemo(() => buildSlides(data), [data]);
   const slide = slides[Math.min(index, slides.length - 1)];
 
+  /* Переход: старый слайд уезжает, затем новый въезжает с той же стороны */
+  const go = (nextIndex, direction) => {
+    if (leaving) return;
+    setDir(direction);
+    setLeaving(true);
+    setTimeout(() => {
+      setIndex(nextIndex);
+      setLeaving(false);
+    }, SLIDE_MS);
+  };
+
   const next = () => {
     if (slide.isLast) {
-      finishOnboarding();
-      navigate('/', { replace: true });
+      if (finishing) return;
+      setFinishing(true);
+      setTimeout(() => {
+        finishOnboarding();
+        navigate('/', { replace: true });
+      }, FINISH_MS);
     } else {
-      setIndex((i) => i + 1);
+      go(index + 1, 1);
     }
   };
 
+  const back = () => {
+    if (index > 0) go(index - 1, -1);
+  };
+
+  /* Свайпы на тач-экранах */
+  const onTouchStart = (e) => {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const onTouchEnd = (e) => {
+    if (!touchStart.current) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current.x;
+    const dy = e.changedTouches[0].clientY - touchStart.current.y;
+    touchStart.current = null;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0 && !slide.isLast) next();
+    if (dx > 0) back();
+  };
+
+  const motionClass = leaving
+    ? dir === 1
+      ? styles.leaveLeft
+      : styles.leaveRight
+    : dir === 1
+      ? styles.enterRight
+      : styles.enterLeft;
+
   return (
-    <div className={styles.page}>
+    <div
+      className={`${styles.page} ${finishing ? styles.pageFinishing : ''}`}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <Header />
-      <main className={styles.main} key={slide.key}>
+      {/* Мобильный порядок: заголовок — фото — описание.
+          На ПК фото уходит в правую колонку (половина экрана, квадратное). */}
+      <main
+        className={`${styles.main} ${slide.image ? styles.withImage : ''} ${motionClass}`}
+        key={index}
+      >
         <span className="eyebrow eyebrowAccent">{slide.eyebrow}</span>
         <h1 className={`h1 ${styles.title}`}>{slide.title}</h1>
+
+        {slide.image && (
+          <img className={styles.image} src={slide.image} alt="" loading="lazy" />
+        )}
+
         {slide.note && <p className={`lead ${styles.note}`}>{slide.note}</p>}
+
+        {slide.points && (
+          <ul className={styles.points}>
+            {slide.points.map((p) => (
+              <li key={p} className={styles.point}>
+                <span className={styles.pointArrow}>→</span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {slide.links && (
           <div className={styles.links}>
@@ -136,15 +211,18 @@ const Onboarding = () => {
           ))}
         </div>
         <div className={styles.controls}>
-          {index > 0 && (
-            <button
-              type="button"
-              className={styles.backBtn}
-              onClick={() => setIndex((i) => i - 1)}
-            >
-              ← Назад
-            </button>
-          )}
+          {/* Кнопка есть всегда: на первом слайде схлопнута («Далее» слева),
+              дальше плавно разъезжается и сдвигает «Далее» вправо */}
+          <button
+            type="button"
+            className={`${styles.backBtn} ${index > 0 ? styles.backBtnVisible : ''}`}
+            onClick={back}
+            disabled={index === 0}
+            aria-hidden={index === 0}
+            tabIndex={index === 0 ? -1 : 0}
+          >
+            ← Назад
+          </button>
           <button type="button" className={`btn ${styles.nextBtn}`} onClick={next}>
             {slide.isLast ? 'Поехали!' : 'Далее'}
             <span className="btnArrow">
