@@ -1,0 +1,102 @@
+.page {
+  min-height: 100vh;
+  padding-top: var(--header-h);
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 48px var(--edge) 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 22px;
+  animation: fadeIn 0.35s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.title {
+  max-width: 16ch;
+}
+
+.note {
+  max-width: 52ch;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.linkBtn {
+  padding: 15px 28px;
+}
+
+.footer {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 var(--edge) 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.dotActive {
+  background: var(--accent);
+  transform: scale(1.25);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-family: var(--font);
+  font-size: 15px;
+  padding: 8px 0;
+}
+
+.backBtn:hover {
+  color: var(--text);
+}
+
+.nextBtn {
+  min-width: 220px;
+}

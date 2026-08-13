@@ -1,0 +1,88 @@
+{
+  "course": {
+    "id": "molds-course",
+    "title": "Производство форм",
+    "subtitle": "От идеи до готовой формы: проектирование, оснастка, изготовление",
+    "modulesCount": 3
+  },
+  "support": {
+    "chatLabel": "Чат курса",
+    "chatUrl": "https://t.me/anyforms_chat",
+    "supportLabel": "Поддержка",
+    "supportUrl": "https://t.me/AnyFormsBot"
+  },
+  "modules": [
+    {
+      "id": "design",
+      "order": 1,
+      "title": "Проектирование",
+      "description": "Учимся придумывать и моделировать форму: от эскиза до готовой 3D-модели, которую можно печатать.",
+      "status": "open",
+      "opensAt": null,
+      "lessons": [
+        {
+          "id": "design-1",
+          "title": "Знакомство с инструментами",
+          "description": "Разбираем, в чём будем работать: программы для моделирования, что поставить и как настроить рабочее место.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        },
+        {
+          "id": "design-2",
+          "title": "Первая модель формы",
+          "description": "Пошагово моделируем простую форму: габариты, толщины стенок, уклоны и допуски под литьё.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        },
+        {
+          "id": "design-3",
+          "title": "Подготовка к печати",
+          "description": "Экспорт модели, слайсинг и типичные ошибки, из-за которых форма не получается с первого раза.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        }
+      ]
+    },
+    {
+      "id": "tooling",
+      "order": 2,
+      "title": "Оснастка",
+      "description": "Печатаем и собираем оснастку: мастер-модели, опалубка и всё, что нужно до заливки силикона.",
+      "status": "locked",
+      "opensAt": "2026-09-01",
+      "lessons": [
+        {
+          "id": "tooling-1",
+          "title": "Мастер-модель и опалубка",
+          "description": "Готовим мастер-модель и собираем опалубку под заливку.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        },
+        {
+          "id": "tooling-2",
+          "title": "Постобработка печати",
+          "description": "Шлифовка, грунтовка и подготовка поверхности, чтобы форма получилась гладкой.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        }
+      ]
+    },
+    {
+      "id": "production",
+      "order": 3,
+      "title": "Изготовление",
+      "description": "Заливаем силикон и получаем готовую форму: материалы, пропорции, дегазация и разбор ошибок.",
+      "status": "locked",
+      "opensAt": "2026-09-15",
+      "lessons": [
+        {
+          "id": "production-1",
+          "title": "Выбор силикона",
+          "description": "Какие бывают силиконы, чем отличаются и что выбрать под вашу задачу.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        },
+        {
+          "id": "production-2",
+          "title": "Заливка и дегазация",
+          "description": "Смешиваем, дегазируем и заливаем силикон. Разбираем частые ошибки: пузыри, непролив, отрыв.",
+          "videoUrl": "https://storage.yandexcloud.net/anyforms/course/landing_course.webm"
+        }
+      ]
+    }
+  ]
+}
