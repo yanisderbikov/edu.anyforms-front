@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
-import { login } from '../../auth';
+import { requestCode, verifyCode } from '../../auth';
 import styles from './Login.module.css';
 
 const ArrowIcon = () => (
@@ -33,28 +33,42 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const submitEmail = (e) => {
+  const submitEmail = async (e) => {
     e.preventDefault();
     if (!isValidEmail(email)) {
       setError('Введите корректный e-mail');
       return;
     }
+    setBusy(true);
     setError('');
-    // Без бэкенда: делаем вид, что код отправлен на почту
-    setStep('code');
+    try {
+      await requestCode(email.trim());
+      setStep('code');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const submitCode = (e) => {
+  const submitCode = async (e) => {
     e.preventDefault();
     if (code.trim().length < 4) {
       setError('Введите код из письма');
       return;
     }
+    setBusy(true);
     setError('');
-    // Без бэкенда: принимаем любой код
-    login(email.trim());
-    navigate('/', { replace: true });
+    try {
+      await verifyCode(email.trim(), code.trim());
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -91,8 +105,8 @@ const Login = () => {
                     autoFocus
                   />
                   {error && <span className={styles.error}>{error}</span>}
-                  <button type="submit" className="btn">
-                    Получить код
+                  <button type="submit" className="btn" disabled={busy}>
+                    {busy ? 'Отправляем…' : 'Получить код'}
                     <span className="btnArrow">
                       <ArrowIcon />
                     </span>
@@ -118,8 +132,8 @@ const Login = () => {
                     autoFocus
                   />
                   {error && <span className={styles.error}>{error}</span>}
-                  <button type="submit" className="btn">
-                    Войти
+                  <button type="submit" className="btn" disabled={busy}>
+                    {busy ? 'Проверяем…' : 'Войти'}
                     <span className="btnArrow">
                       <ArrowIcon />
                     </span>

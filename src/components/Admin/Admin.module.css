@@ -1,0 +1,313 @@
+.page {
+  min-height: 100vh;
+  padding-top: var(--header-h);
+}
+
+.main {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 56px var(--edge) 22vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.loading,
+.error {
+  color: var(--text-faint);
+}
+
+.error {
+  color: var(--danger);
+}
+
+/* Вкладки разделов админки */
+.tabs {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 5px;
+}
+
+.tab {
+  text-decoration: none;
+  color: var(--text-faint);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tabActive {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 640px;
+}
+
+.backLink {
+  text-decoration: none;
+  color: var(--text-faint);
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+
+.backLink:hover {
+  color: var(--text);
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+.block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.blockTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.select {
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.badge {
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+/* ── Превью модулей на /admin/course ── */
+.moduleList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.moduleCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.moduleCard:hover {
+  background: var(--panel-hover);
+  transform: translateY(-2px);
+}
+
+.moduleCardHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.numLocked {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-faint);
+}
+
+.moduleCardTitle {
+  flex: 1;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.moduleCardDesc {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.moduleCardMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: var(--fs-small);
+  color: var(--text-faint);
+}
+
+.moduleCardAction {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+.empty {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.createRow {
+  width: 100%;
+}
+
+.preview {
+  width: 100%;
+  max-width: 260px;
+  border-radius: 12px;
+  object-fit: cover;
+  aspect-ratio: 16 / 10;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
+.row .input,
+.row input {
+  flex: 1;
+}
+
+/* Номер по порядку: узкое поле с подписью. width с !important —
+   иначе его перебивает width:100% из базового .input */
+.ordLabel {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ordCaption {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.ordInput {
+  flex: none !important;
+  width: 84px !important;
+  text-align: center;
+}
+
+/* Ряд, где рядом с полем есть подпись сверху — выравниваем по низу */
+.rowBottom {
+  align-items: flex-end;
+}
+
+.textarea {
+  resize: vertical;
+  font-family: var(--font);
+}
+
+.dateLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--fs-small);
+  color: var(--text-faint);
+}
+
+.dateInput {
+  width: 220px;
+  color-scheme: dark;
+}
+
+/* Работает и на button, и на Link */
+.smallBtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 16px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.smallBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.smallBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.danger {
+  color: var(--danger);
+  border-color: rgba(224, 92, 92, 0.5);
+}
+
+.danger:hover {
+  background: rgba(224, 92, 92, 0.12);
+}
+
+.lesson {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+@media (max-width: 640px) {
+  .row {
+    flex-wrap: wrap;
+  }
+}

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
 import { finishOnboarding } from '../../auth';
-import { fetchCourse } from '../../api/courseApi';
+import { fetchOnboarding } from '../../api/onboardingApi';
 import styles from './Onboarding.module.css';
 
 const ArrowIcon = () => (
@@ -17,68 +17,41 @@ const ArrowIcon = () => (
   </svg>
 );
 
-/* Онбординг сделан «живым кодом»: тексты слайдов собираются здесь,
-   данные курса (название, модули, ссылки) подтягиваются из JSON. */
+/* Слово в {фигурных скобках} красим акцентом: «Ну что, {поехали?}» */
+const renderTitle = (title) =>
+  String(title ?? '')
+    .split(/(\{[^}]*\})/)
+    .filter(Boolean)
+    .map((part, i) =>
+      part.startsWith('{') && part.endsWith('}') ? (
+        <span key={i} className="hAccent">
+          {part.slice(1, -1)}
+        </span>
+      ) : (
+        <React.Fragment key={i}>{part}</React.Fragment>
+      )
+    );
+
+/* Слайды приходят с бэкенда и правятся в /admin/onboarding */
 const buildSlides = (data) => {
-  const title = data?.course?.title || 'курсе';
-  const modules = data?.modules || [];
   const support = data?.support;
 
-  return [
-    {
-      key: 'hello',
-      eyebrow: 'Добро пожаловать',
-      title: (
-        <>
-          Рады видеть вас на курсе{' '}
-          <span className="hAccent">«{title}»</span>
-        </>
-      ),
-      note: 'Пара минут — расскажем, как здесь всё устроено.',
-    },
-    {
-      key: 'count',
-      eyebrow: 'Как устроен курс',
-      title: (
-        <>
-          На курсе будет <span className="hAccent">{modules.length || 3} модуля</span>
-        </>
-      ),
-      note: 'Они открываются по очереди — от простого к сложному.',
-    },
-    ...modules.map((m, i) => ({
-      key: m.id,
-      eyebrow: `Модуль ${i + 1}`,
-      title: <span className="hAccent">{m.title}</span>,
-      points: m.points,
-      image: m.image,
-    })),
-    {
-      key: 'support',
-      eyebrow: 'Мы рядом',
-      title: (
-        <>
-          Мы всегда <span className="hAccent">на связи</span>
-        </>
-      ),
-      note: 'Вопрос по уроку или что-то не работает — пишите, отвечаем быстро.',
-      links: support && [
-        { label: support.chatLabel, url: support.chatUrl },
-        { label: support.supportLabel, url: support.supportUrl },
-      ],
-    },
-    {
-      key: 'go',
-      eyebrow: 'Всё готово',
-      title: (
-        <>
-          Ну что, <span className="hAccent">поехали?</span>
-        </>
-      ),
-      note: 'Первый модуль уже открыт и ждёт вас.',
-      isLast: true,
-    },
-  ];
+  return (data?.slides || []).map((s) => ({
+    key: s.id,
+    eyebrow: s.eyebrow,
+    title: renderTitle(s.title),
+    note: s.body,
+    points: s.points?.length ? s.points : null,
+    image: s.image,
+    links:
+      s.kind === 'SUPPORT' && support
+        ? [
+            { label: support.chatLabel, url: support.chatUrl },
+            { label: support.supportLabel, url: support.supportUrl },
+          ].filter((l) => l.url)
+        : null,
+    isLast: s.kind === 'FINAL',
+  }));
 };
 
 const SLIDE_MS = 260; // длительность анимации ухода слайда (синхронно с CSS)
@@ -94,11 +67,23 @@ const Onboarding = () => {
   const touchStart = useRef(null);
 
   useEffect(() => {
-    fetchCourse().then(setData).catch(() => setData({}));
+    fetchOnboarding().then(setData).catch(() => setData({}));
   }, []);
 
   const slides = useMemo(() => buildSlides(data), [data]);
   const slide = slides[Math.min(index, slides.length - 1)];
+
+  // Слайдов нет (админ их удалил) — сразу на главную
+  useEffect(() => {
+    if (data && slides.length === 0) {
+      finishOnboarding();
+      navigate('/', { replace: true });
+    }
+  }, [data, slides.length, navigate]);
+
+  if (!slide) {
+    return null;
+  }
 
   /* Переход: старый слайд уезжает, затем новый въезжает с той же стороны */
   const go = (nextIndex, direction) => {
