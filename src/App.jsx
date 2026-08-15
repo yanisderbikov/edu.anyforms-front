@@ -19,12 +19,13 @@ const RequireAuth = ({ children }) => {
     if (!isLoggedIn()) return;
     fetchProgress()
       .then(setProgress)
-      // Прогресс не отвечает (старый бэк, сеть) — пускаем в курс, а не запираем
+      // Прогресс не отвечает (сеть, бэк лежит) — пускаем в курс, а не запираем
       // в онбординге: иначе «Поехали» вернёт на онбординг по кругу
       .catch((e) => {
         console.error('Не удалось получить прогресс:', e);
-        setProgress({ onboardingDone: true });
+        setProgress({ onboardingDone: true, completedLessonIds: [] });
       });
+    // Кеш прогресса живёт в progressApi, так что лишних запросов не будет
   }, [location.pathname]);
 
   if (!isLoggedIn()) {

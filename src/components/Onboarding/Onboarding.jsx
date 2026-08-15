@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
-import { finishOnboarding } from '../../api/progressApi';
+import { finishOnboarding, markOnboardingFallback } from '../../api/progressApi';
+import { toastError } from '../shared/SupportHint';
 import { fetchOnboarding } from '../../api/onboardingApi';
 import styles from './Onboarding.module.css';
 
@@ -77,7 +78,11 @@ const Onboarding = () => {
   useEffect(() => {
     if (data && slides.length === 0) {
       finishOnboarding()
-        .catch(() => {})
+        .catch((err) => {
+          // Сервер не смог записать — помечаем локально, чтобы не зациклиться
+          markOnboardingFallback();
+          toastError(err);
+        })
         .finally(() => navigate('/', { replace: true }));
     }
   }, [data, slides.length, navigate]);
@@ -101,8 +106,13 @@ const Onboarding = () => {
     if (slide.isLast) {
       if (finishing) return;
       setFinishing(true);
-      // Статус пишем в БД параллельно с анимацией «улёта»
-      const saved = finishOnboarding().catch(() => {});
+      // Статус пишем в БД параллельно с анимацией «улёта».
+      // Если сервер не ответил — говорим об этом и ставим локальную отметку,
+      // иначе роутер вернёт человека обратно в онбординг по кругу
+      const saved = finishOnboarding().catch((err) => {
+        markOnboardingFallback();
+        toastError(err);
+      });
       setTimeout(() => {
         saved.finally(() => navigate('/', { replace: true }));
       }, FINISH_MS);
