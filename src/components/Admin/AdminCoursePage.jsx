@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import SupportHint, { toastError } from '../shared/SupportHint';
 import AdminLayout from './AdminLayout';
+import AutoTextarea from '../shared/AutoTextarea';
 import { getAdminCourse, updateCourse, createModule } from '../../api/adminApi';
 import styles from './Admin.module.css';
 
@@ -82,7 +84,7 @@ const AdminCoursePage = () => {
       toast.success('Шапка курса сохранена');
       load();
     } catch (err) {
-      toast.error(err.message);
+      toastError(err);
     }
   };
 
@@ -95,12 +97,13 @@ const AdminCoursePage = () => {
         order: (data?.modules.length ?? 0) + 1,
         title: newTitle.trim(),
         description: null,
+        imageUrl: null,
         opensAt: null,
       });
       toast.success('Модуль создан');
       navigate(`/admin/course/${id}`);
     } catch (err) {
-      toast.error(err.message);
+      toastError(err);
     } finally {
       setCreating(false);
     }
@@ -118,7 +121,11 @@ const AdminCoursePage = () => {
         </p>
       </div>
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && (
+        <p className={styles.error}>
+          <SupportHint>{error}</SupportHint>
+        </p>
+      )}
       {!data && !error && <p className={styles.loading}>Загружаем…</p>}
 
       {data && courseForm && (
@@ -126,10 +133,10 @@ const AdminCoursePage = () => {
           <section className={`card ${styles.block}`}>
             <h3 className={styles.blockTitle}>Шапка курса</h3>
             <input className="input" placeholder="Название" value={courseForm.title} onChange={setC('title')} />
-            <textarea
+            <AutoTextarea
               className={`input ${styles.textarea}`}
               placeholder="Подзаголовок"
-              rows={2}
+              minRows={2}
               value={courseForm.subtitle}
               onChange={setC('subtitle')}
             />

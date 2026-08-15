@@ -21,12 +21,42 @@
   color: var(--danger);
 }
 
+/* Кольцо всегда напротив заголовка, и на мобилке тоже */
+.headRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 44px;
+}
+
 .head {
   display: flex;
   flex-direction: column;
   gap: 16px;
   max-width: 640px;
-  margin-bottom: 44px;
+  min-width: 0;
+}
+
+/* Десктоп: крупное кольцо по центру блока заголовка */
+.headRow {
+  align-items: center;
+}
+
+/* Мобилка: компактное кольцо напротив строки заголовка */
+@media (max-width: 640px) {
+  .headRow {
+    align-items: flex-start;
+  }
+
+  .headRow > :last-child {
+    margin-top: 26px;
+  }
+}
+
+/* Кольцо в карточке модуля — прижато вправо */
+.cardRing {
+  margin-left: auto;
 }
 
 .grid {
@@ -86,6 +116,30 @@ a.card:hover {
 .numLocked {
   background: rgba(255, 255, 255, 0.12);
   color: var(--text-faint);
+}
+
+/* Фото модуля 16:9 — во всю ширину карточки, поверх её паддингов */
+.cardImageWrap {
+  margin: -28px -26px 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cardImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+a.card:hover .cardImage {
+  transform: scale(1.04);
+}
+
+.cardLocked .cardImage {
+  filter: grayscale(0.65) brightness(0.8);
 }
 
 .cardDesc {

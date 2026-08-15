@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { isLoggedIn, isOnboardingDone } from './auth';
+import { isLoggedIn } from './auth';
+import { fetchProgress } from './api/progressApi';
 import Login from './components/Login/Login';
 import Onboarding from './components/Onboarding/Onboarding';
 import Home from './components/Home/Home';
@@ -9,13 +10,30 @@ import AdminCoursePage from './components/Admin/AdminCoursePage';
 import AdminModulePage from './components/Admin/AdminModulePage';
 import AdminOnboardingPage from './components/Admin/AdminOnboardingPage';
 
-/* Защита роутов: не залогинен → /login, залогинен без онбординга → /onboarding */
+/* Защита роутов: не залогинен → /login; онбординг не пройден (статус в БД) → /onboarding */
 const RequireAuth = ({ children }) => {
   const location = useLocation();
+  const [progress, setProgress] = useState(null);
+
+  useEffect(() => {
+    if (!isLoggedIn()) return;
+    fetchProgress()
+      .then(setProgress)
+      // Прогресс не отвечает (старый бэк, сеть) — пускаем в курс, а не запираем
+      // в онбординге: иначе «Поехали» вернёт на онбординг по кругу
+      .catch((e) => {
+        console.error('Не удалось получить прогресс:', e);
+        setProgress({ onboardingDone: true });
+      });
+  }, [location.pathname]);
+
   if (!isLoggedIn()) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
-  if (!isOnboardingDone() && location.pathname !== '/onboarding') {
+  if (!progress) {
+    return null; // короткий момент загрузки статуса из БД
+  }
+  if (!progress.onboardingDone && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
   return children;

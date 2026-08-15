@@ -1,67 +1,46 @@
 /**
  * Авторизация через бэкенд: код на почту → JWT (живёт месяц).
+ * Токен хранит apiClient (схема anyforms-front), email и роль читаются из JWT.
  * У клиентов вход с нового устройства гасит старые токены (решает бэкенд).
  */
-const AUTH_KEY = 'edu_af_auth';
-const ONBOARDING_KEY = 'edu_af_onboarding_done';
+import apiClient, { apiErrorMessage } from './apiClient';
+import { invalidateProgress } from './api/progressApi';
 
-const handle = async (res) => {
-  if (res.ok) return res.json();
-  let message = `Ошибка ${res.status}`;
+export const requestCode = async (email) => {
   try {
-    const body = await res.json();
-    if (body.message) message = body.message;
-  } catch {
-    /* тело не JSON */
+    const res = await apiClient.instance.post('/api/auth/request-code', { email });
+    return res.data;
+  } catch (e) {
+    throw new Error(apiErrorMessage(e));
   }
-  throw new Error(message);
 };
-
-export const requestCode = (email) =>
-  fetch('/api/public/auth/request-code', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  }).then(handle);
 
 export const verifyCode = async (email, code) => {
-  const result = await fetch('/api/public/auth/verify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, code }),
-  }).then(handle);
-  localStorage.setItem(
-    AUTH_KEY,
-    JSON.stringify({ email: result.email, role: result.role, token: result.token })
-  );
-  return result;
-};
-
-export const getAuth = () => {
   try {
-    return JSON.parse(localStorage.getItem(AUTH_KEY));
-  } catch {
-    return null;
+    const res = await apiClient.instance.post('/api/auth/verify', { email, code });
+    apiClient.setToken(res.data.token);
+    return res.data;
+  } catch (e) {
+    throw new Error(apiErrorMessage(e));
   }
 };
 
-export const getToken = () => getAuth()?.token || null;
+export const getAuth = () => apiClient.getJwtMetadata();
 
-export const isAdmin = () => getAuth()?.role === 'ADMIN';
+export const getToken = () => apiClient.getToken();
 
-export const isLoggedIn = () => Boolean(getToken());
+export const isAdmin = () => apiClient.getJwtMetadata()?.role === 'ADMIN';
+
+export const isLoggedIn = () => apiClient.hasLiveToken();
 
 export const logout = () => {
-  localStorage.removeItem(AUTH_KEY);
-  localStorage.removeItem(ONBOARDING_KEY);
+  apiClient.clearToken();
+  // Прогресс хранится в БД — локально сбрасываем только кеш
+  invalidateProgress();
 };
 
-/** Токен протух/отозван (401 с бэка) — чистим сессию и уводим на логин */
+/** Токен протух/отозван — чистим сессию и уводим на логин */
 export const dropSession = () => {
   logout();
   window.location.assign('/login');
 };
-
-export const isOnboardingDone = () => localStorage.getItem(ONBOARDING_KEY) === '1';
-
-export const finishOnboarding = () => localStorage.setItem(ONBOARDING_KEY, '1');

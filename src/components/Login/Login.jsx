@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
+import SupportHint from '../shared/SupportHint';
 import { requestCode, verifyCode } from '../../auth';
 import styles from './Login.module.css';
 
@@ -104,7 +105,11 @@ const Login = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     autoFocus
                   />
-                  {error && <span className={styles.error}>{error}</span>}
+                  {error && (
+                    <span className={styles.error}>
+                      <SupportHint>{error}</SupportHint>
+                    </span>
+                  )}
                   <button type="submit" className="btn" disabled={busy}>
                     {busy ? 'Отправляем…' : 'Получить код'}
                     <span className="btnArrow">
@@ -131,7 +136,11 @@ const Login = () => {
                     onChange={(e) => setCode(e.target.value)}
                     autoFocus
                   />
-                  {error && <span className={styles.error}>{error}</span>}
+                  {error && (
+                    <span className={styles.error}>
+                      <SupportHint>{error}</SupportHint>
+                    </span>
+                  )}
                   <button type="submit" className="btn" disabled={busy}>
                     {busy ? 'Проверяем…' : 'Войти'}
                     <span className="btnArrow">

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import SupportHint, { toastError } from '../shared/SupportHint';
 import AdminLayout, { DirectUploadButton } from './AdminLayout';
+import AutoTextarea from '../shared/AutoTextarea';
 import { getAdminOnboarding, createSlide, updateSlide, deleteSlide } from '../../api/adminApi';
 import styles from './Admin.module.css';
 
@@ -46,7 +48,7 @@ const SlideRow = ({ slide, onChanged }) => {
       }
       onChanged();
     } catch (err) {
-      toast.error(err.message);
+      toastError(err);
     } finally {
       setBusy(false);
     }
@@ -59,7 +61,7 @@ const SlideRow = ({ slide, onChanged }) => {
       toast.success('Слайд удалён');
       onChanged();
     } catch (err) {
-      toast.error(err.message);
+      toastError(err);
     }
   };
 
@@ -96,17 +98,17 @@ const SlideRow = ({ slide, onChanged }) => {
         value={form.title}
         onChange={set('title')}
       />
-      <textarea
+      <AutoTextarea
         className={`input ${styles.textarea}`}
         placeholder="Подпись под заголовком"
-        rows={2}
+        minRows={2}
         value={form.body}
         onChange={set('body')}
       />
-      <textarea
+      <AutoTextarea
         className={`input ${styles.textarea}`}
         placeholder="Пункты со стрелками — по одному на строку"
-        rows={3}
+        minRows={3}
         value={form.points}
         onChange={set('points')}
       />
@@ -173,7 +175,11 @@ const AdminOnboardingPage = () => {
         </p>
       </div>
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && (
+        <p className={styles.error}>
+          <SupportHint>{error}</SupportHint>
+        </p>
+      )}
       {!data && !error && <p className={styles.loading}>Загружаем…</p>}
 
       {data && (

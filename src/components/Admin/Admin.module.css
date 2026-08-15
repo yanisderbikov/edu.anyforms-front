@@ -302,8 +302,66 @@
   flex-direction: column;
   gap: 10px;
   background: rgba(255, 255, 255, 0.04);
+  /* прозрачная рамка, чтобы подсветка dirty не сдвигала вёрстку */
+  border: 1px solid transparent;
   border-radius: 14px;
   padding: 14px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+/* Стрелки порядка урока */
+.moveCol {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.moveBtn {
+  width: 30px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.moveBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.moveBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Несохранённые правки: строка подсвечена акцентной рамкой */
+.lessonDirty {
+  border: 1px solid rgba(108, 134, 189, 0.55);
+  background: rgba(108, 134, 189, 0.08);
+}
+
+/* «Сохранить» без правок — прозрачная и неактивная */
+.saveIdle {
+  opacity: 0.35;
+}
+
+/* Есть правки — яркая акцентная */
+.saveDirty {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+
+.saveDirty:hover:not(:disabled) {
+  background: var(--accent-hover);
 }
 
 @media (max-width: 640px) {

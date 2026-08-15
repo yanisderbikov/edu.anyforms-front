@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Navigate, NavLink } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import SupportHint, { toastError } from '../shared/SupportHint';
 import Header from '../shared/Header/Header';
 import { isAdmin } from '../../auth';
 import { presignUpload, uploadToS3 } from '../../api/adminApi';
@@ -50,7 +51,7 @@ export const DirectUploadButton = ({ prefix, onUploaded, label }) => {
       onUploaded(key);
       toast.success('Файл загружен — не забудьте сохранить');
     } catch (err) {
-      toast.error(err.message);
+      toastError(err);
     } finally {
       setProgress(null);
     }

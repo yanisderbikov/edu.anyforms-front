@@ -1,27 +1,45 @@
-/**
- * Прогресс прохождения: какие уроки просмотрены полностью.
- *
- * Сейчас — заглушка на localStorage, но интерфейс уже «как у бэкенда»:
- *   GET  /api/progress            → { completedLessonIds: [...] }
- *   POST /api/progress/complete   → { lessonId }
- * Когда появится бэкенд (он будет получать событие ended от плеера
- * и сам решать, что урок «просмотрен полностью») — меняем только этот файл.
- */
-const KEY = 'edu_af_progress';
+import apiClient, { apiErrorMessage } from '../apiClient';
 
-const read = () => {
+/**
+ * Прогресс живёт в БД (/api/me): онбординг и просмотренные уроки
+ * не теряются и видны с любого устройства. У админов онбординг всегда пройден.
+ */
+let cache = null;
+
+export const fetchProgress = async () => {
+  if (cache) return cache;
   try {
-    return new Set(JSON.parse(localStorage.getItem(KEY)) || []);
-  } catch {
-    return new Set();
+    const res = await apiClient.instance.get('/api/me/progress');
+    cache = res.data;
+    return cache;
+  } catch (e) {
+    throw new Error(apiErrorMessage(e, 'Не удалось загрузить прогресс'));
   }
 };
 
-export const fetchCompletedLessons = async () => read();
+export const invalidateProgress = () => {
+  cache = null;
+};
+
+export const fetchCompletedLessons = async () => {
+  const progress = await fetchProgress();
+  return new Set(progress.completedLessonIds);
+};
 
 export const completeLesson = async (lessonId) => {
-  const set = read();
-  set.add(lessonId);
-  localStorage.setItem(KEY, JSON.stringify([...set]));
-  return set;
+  await apiClient.instance.post(`/api/me/lessons/${lessonId}/complete`);
+  if (cache) {
+    cache = {
+      ...cache,
+      completedLessonIds: [...new Set([...cache.completedLessonIds, lessonId])],
+    };
+  }
+  return new Set(cache?.completedLessonIds ?? [lessonId]);
+};
+
+export const finishOnboarding = async () => {
+  await apiClient.instance.post('/api/me/onboarding-done');
+  if (cache) {
+    cache = { ...cache, onboardingDone: true };
+  }
 };

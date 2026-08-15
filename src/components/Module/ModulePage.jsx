@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Header from '../shared/Header/Header';
+import SupportHint from '../shared/SupportHint';
 import { fetchCourse } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
 import styles from './ModulePage.module.css';
@@ -70,7 +71,11 @@ const ModulePage = () => {
           ← Все модули
         </Link>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <p className={styles.error}>
+            <SupportHint>{error}</SupportHint>
+          </p>
+        )}
         {!data && !error && <p className={styles.loading}>Загружаем модуль…</p>}
 
         {data && !module && <p className={styles.error}>Модуль не найден.</p>}

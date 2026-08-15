@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
-import { finishOnboarding } from '../../auth';
+import { finishOnboarding } from '../../api/progressApi';
 import { fetchOnboarding } from '../../api/onboardingApi';
 import styles from './Onboarding.module.css';
 
@@ -76,8 +76,9 @@ const Onboarding = () => {
   // Слайдов нет (админ их удалил) — сразу на главную
   useEffect(() => {
     if (data && slides.length === 0) {
-      finishOnboarding();
-      navigate('/', { replace: true });
+      finishOnboarding()
+        .catch(() => {})
+        .finally(() => navigate('/', { replace: true }));
     }
   }, [data, slides.length, navigate]);
 
@@ -100,9 +101,10 @@ const Onboarding = () => {
     if (slide.isLast) {
       if (finishing) return;
       setFinishing(true);
+      // Статус пишем в БД параллельно с анимацией «улёта»
+      const saved = finishOnboarding().catch(() => {});
       setTimeout(() => {
-        finishOnboarding();
-        navigate('/', { replace: true });
+        saved.finally(() => navigate('/', { replace: true }));
       }, FINISH_MS);
     } else {
       go(index + 1, 1);

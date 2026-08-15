@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
+import SupportHint from '../shared/SupportHint';
+import ProgressRing from '../shared/ProgressRing';
 import { getAuth, logout } from '../../auth';
 import { fetchCourse } from '../../api/courseApi';
+import { fetchCompletedLessons } from '../../api/progressApi';
 import styles from './Home.module.css';
 
 const PersonIcon = () => (
@@ -46,6 +49,7 @@ const formatOpensAt = (iso) => {
 const Home = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [completed, setCompleted] = useState(new Set());
   const [error, setError] = useState('');
   const [accountOpen, setAccountOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -53,7 +57,14 @@ const Home = () => {
 
   useEffect(() => {
     fetchCourse().then(setData).catch((e) => setError(e.message));
+    fetchCompletedLessons().then(setCompleted).catch(() => {});
   }, []);
+
+  /** Сколько уроков модуля досмотрено */
+  const doneInModule = (m) => m.lessons.filter((l) => completed.has(l.id)).length;
+
+  /** Модуль пройден = есть уроки и все досмотрены */
+  const isModuleDone = (m) => m.lessons.length > 0 && doneInModule(m) === m.lessons.length;
 
   // Закрываем меню ЛК по клику мимо
   useEffect(() => {
@@ -96,20 +107,37 @@ const Home = () => {
       <Header right={account} />
 
       <main className={styles.main}>
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <p className={styles.error}>
+            <SupportHint>{error}</SupportHint>
+          </p>
+        )}
         {!data && !error && <p className={styles.loading}>Загружаем курс…</p>}
 
         {data && (
           <>
-            <div className={styles.head}>
-              <span className="eyebrow eyebrowAccent">Ваш курс</span>
-              <h1 className="h2">
-                {data.course.title.split(' ')[0]}{' '}
-                <span className="hAccent">
-                  {data.course.title.split(' ').slice(1).join(' ')}
-                </span>
-              </h1>
-              <p className="lead">{data.course.subtitle}</p>
+            <div className={styles.headRow}>
+              <div className={styles.head}>
+                <span className="eyebrow eyebrowAccent">Ваш курс</span>
+                <h1 className="h2">
+                  {data.course.title.split(' ')[0]}{' '}
+                  <span className="hAccent">
+                    {data.course.title.split(' ').slice(1).join(' ')}
+                  </span>
+                </h1>
+                <p className="lead">{data.course.subtitle}</p>
+              </div>
+              {/* Сводка: сколько модулей пройдено целиком.
+                  Десктоп — крупное кольцо, мобилка — компактное напротив заголовка */}
+              <ProgressRing
+                done={data.modules.filter(isModuleDone).length}
+                total={data.modules.length}
+                size={96}
+                stroke={7}
+                mobileSize={64}
+                mobileStroke={5}
+                caption="пройдено"
+              />
             </div>
 
             <div className={styles.grid}>
@@ -117,11 +145,21 @@ const Home = () => {
                 const locked = m.status !== 'open';
                 const inner = (
                   <>
+                    {m.image && (
+                      <div className={styles.cardImageWrap}>
+                        <img className={styles.cardImage} src={m.image} alt="" loading="lazy" />
+                      </div>
+                    )}
                     <div className={styles.cardHead}>
                       <span className={`${styles.num} ${locked ? styles.numLocked : ''}`}>
                         {locked ? <LockIcon /> : m.order}
                       </span>
                       <h2 className="h3">{m.title}</h2>
+                      {!locked && m.lessons.length > 0 && (
+                        <span className={styles.cardRing}>
+                          <ProgressRing done={doneInModule(m)} total={m.lessons.length} size={44} stroke={4} />
+                        </span>
+                      )}
                     </div>
                     <p className={styles.cardDesc}>{m.description}</p>
                     <span className={locked ? styles.cardLockNote : styles.cardOpenNote}>
