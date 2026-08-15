@@ -12,40 +12,61 @@ const KINDS = [
   { value: 'FINAL', label: 'Последний — кнопка «Поехали!»' },
 ];
 
-const SlideRow = ({ slide, onChanged }) => {
-  const isNew = !slide.id;
+/* Слайд: порядок — стрелками вверх/вниз. Пока есть несохранённые правки,
+   карточка подсвечена, «Сохранить» — яркая */
+const SlideRow = ({ slide, index, count, onChanged }) => {
+  const savedPoints = (slide.points ?? []).join('\n');
   const [form, setForm] = useState({
-    order: slide.order ?? 1,
     kind: slide.kind ?? 'TEXT',
     eyebrow: slide.eyebrow ?? '',
     title: slide.title ?? '',
     body: slide.body ?? '',
-    points: (slide.points ?? []).join('\n'),
+    points: savedPoints,
     imageUrl: slide.imageKey ?? '',
   });
   const [busy, setBusy] = useState(false);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
+  // Есть ли отличия от сохранённого на бэке
+  const dirty =
+    form.kind !== (slide.kind ?? 'TEXT') ||
+    form.eyebrow !== (slide.eyebrow ?? '') ||
+    form.title !== (slide.title ?? '') ||
+    form.body !== (slide.body ?? '') ||
+    form.points !== savedPoints ||
+    form.imageUrl !== (slide.imageKey ?? '');
+
+  const payload = (order) => ({
+    order,
+    kind: form.kind,
+    eyebrow: form.eyebrow,
+    title: form.title,
+    body: form.body,
+    points: form.points.split('\n').map((s) => s.trim()).filter(Boolean),
+    imageUrl: form.imageUrl || null,
+  });
+
   const save = async () => {
     setBusy(true);
     try {
-      const payload = {
-        order: Number(form.order),
-        kind: form.kind,
-        eyebrow: form.eyebrow,
-        title: form.title,
-        body: form.body,
-        points: form.points.split('\n').map((s) => s.trim()).filter(Boolean),
-        imageUrl: form.imageUrl || null,
-      };
-      if (isNew) {
-        await createSlide(payload);
-        toast.success('Слайд создан');
-      } else {
-        await updateSlide(slide.id, payload);
-        toast.success('Слайд сохранён');
-      }
+      await updateSlide(slide.id, payload(index + 1));
+      toast.success('Слайд сохранён');
+      onChanged();
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* Сдвиг: вверх — на прежнюю позицию соседа сверху; вниз — за соседа снизу.
+     «+3» из-за перенумерации на бэке: при равных номерах сохранённый слайд
+     встаёт первым, поэтому просто «+1» оставил бы его на месте */
+  const move = async (dir) => {
+    setBusy(true);
+    try {
+      await updateSlide(slide.id, payload(dir === 'up' ? index : index + 3));
       onChanged();
     } catch (err) {
       toastError(err);
@@ -55,7 +76,7 @@ const SlideRow = ({ slide, onChanged }) => {
   };
 
   const remove = async () => {
-    if (!window.confirm(`Удалить слайд «${form.title}»?`)) return;
+    if (!window.confirm(`Удалить слайд «${form.title || 'без заголовка'}»?`)) return;
     try {
       await deleteSlide(slide.id);
       toast.success('Слайд удалён');
@@ -66,17 +87,28 @@ const SlideRow = ({ slide, onChanged }) => {
   };
 
   return (
-    <section className={`card ${styles.block}`}>
-      <div className={`${styles.row} ${styles.rowBottom}`}>
-        <label className={styles.ordLabel}>
-          <span className={styles.ordCaption}>Слайд №</span>
-          <input
-            className={`input ${styles.ordInput}`}
-            type="number"
-            value={form.order}
-            onChange={set('order')}
-          />
-        </label>
+    <section className={`card ${styles.block} ${dirty ? styles.lessonDirty : ''}`}>
+      <div className={styles.row}>
+        <span className={styles.moveCol}>
+          <button
+            type="button"
+            className={styles.moveBtn}
+            title="Выше"
+            disabled={busy || index === 0}
+            onClick={() => move('up')}
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            className={styles.moveBtn}
+            title="Ниже"
+            disabled={busy || index === count - 1}
+            onClick={() => move('down')}
+          >
+            ↓
+          </button>
+        </span>
         <select className={`input ${styles.select}`} value={form.kind} onChange={set('kind')}>
           {KINDS.map((k) => (
             <option key={k.value} value={k.value}>
@@ -130,14 +162,17 @@ const SlideRow = ({ slide, onChanged }) => {
       {slide.image && <img className={styles.preview} src={slide.image} alt="" />}
 
       <div className={styles.row}>
-        <button type="button" className="btn" disabled={busy} onClick={save}>
-          {isNew ? 'Создать слайд' : 'Сохранить'}
+        <button
+          type="button"
+          className={`${styles.smallBtn} ${dirty ? styles.saveDirty : styles.saveIdle}`}
+          disabled={busy || !dirty}
+          onClick={save}
+        >
+          Сохранить
         </button>
-        {!isNew && (
-          <button type="button" className={`${styles.smallBtn} ${styles.danger}`} onClick={remove}>
-            Удалить
-          </button>
-        )}
+        <button type="button" className={`${styles.smallBtn} ${styles.danger}`} onClick={remove}>
+          Удалить
+        </button>
       </div>
     </section>
   );
@@ -146,14 +181,13 @@ const SlideRow = ({ slide, onChanged }) => {
 const AdminOnboardingPage = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
-  const [addingSlide, setAddingSlide] = useState(false);
+  const [creatingSlide, setCreatingSlide] = useState(false);
 
   const load = useCallback(() => {
     getAdminOnboarding()
       .then((d) => {
         setData(d);
         setError('');
-        setAddingSlide(false);
       })
       .catch((e) => setError(`${e.message}. Проверьте, что бэкенд запущен на :8091.`));
   }, []);
@@ -161,6 +195,28 @@ const AdminOnboardingPage = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Слайд создаётся сразу — дальше карточку просто редактируют и сохраняют
+  const addSlide = async () => {
+    setCreatingSlide(true);
+    try {
+      await createSlide({
+        order: (data?.slides.length ?? 0) + 1,
+        kind: 'TEXT',
+        eyebrow: null,
+        title: '',
+        body: null,
+        points: [],
+        imageUrl: null,
+      });
+      toast.success('Слайд добавлен');
+      load();
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setCreatingSlide(false);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -184,17 +240,24 @@ const AdminOnboardingPage = () => {
 
       {data && (
         <>
-          {data.slides.map((s) => (
-            <SlideRow key={s.id} slide={s} onChanged={load} />
+          {data.slides.map((s, i) => (
+            <SlideRow
+              key={s.id}
+              slide={s}
+              index={i}
+              count={data.slides.length}
+              onChanged={load}
+            />
           ))}
 
-          {addingSlide ? (
-            <SlideRow slide={{ order: data.slides.length + 1, kind: 'TEXT' }} onChanged={load} />
-          ) : (
-            <button type="button" className="btn btnGhost" onClick={() => setAddingSlide(true)}>
-              + Новый слайд
-            </button>
-          )}
+          <button
+            type="button"
+            className="btn btnGhost"
+            disabled={creatingSlide}
+            onClick={addSlide}
+          >
+            {creatingSlide ? 'Создаём…' : '+ Новый слайд'}
+          </button>
         </>
       )}
     </AdminLayout>
