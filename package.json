@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
+    "start": "node scripts/inject-env.mjs && vite preview --host --port ${PORT:-4173}",
     "preview": "vite preview",
     "api": "swagger-typescript-api generate -p https://edu-anyforms-back.up.railway.app/v3/api-docs -o ./src/shared/api -n api.gen.ts --axios --union-enums",
     "dev-api": "swagger-typescript-api generate -p http://localhost:8091/v3/api-docs -o ./src/shared/api -n api.gen.ts --axios --union-enums"

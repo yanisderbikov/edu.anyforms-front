@@ -1,13 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Данные курса отдаёт бэкенд edu.anyforms-back (localhost:8091).
-// Мок остался в mock/course.json — если бэк не поднят, можно вернуть плагин из git-истории.
+// Адрес бэка задаётся ТОЛЬКО через VITE_API_URL (см. src/config.jsx):
+// локально — .env.development, на стендах — переменная окружения при сборке.
+// Прокси не используем, чтобы механизм был один и тот же везде.
 export default defineConfig({
   plugins: [react()],
-  server: {
-    proxy: {
-      '/api': 'http://localhost:8091',
-    },
-  },
 });
