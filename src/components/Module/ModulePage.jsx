@@ -110,6 +110,7 @@ const ModulePage = () => {
                     <video
                       className={styles.video}
                       src={lesson.videoUrl}
+                      poster={lesson.cover}
                       controls
                       preload="metadata"
                       playsInline

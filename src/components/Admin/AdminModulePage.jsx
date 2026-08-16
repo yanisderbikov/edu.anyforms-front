@@ -14,13 +14,14 @@ import {
 } from '../../api/adminApi';
 import styles from './Admin.module.css';
 
-/* ── Урок: заголовок, видео, описание. Порядок — стрелками вверх/вниз.
+/* ── Урок: заголовок, видео, обложка, описание. Порядок — стрелками вверх/вниз.
      Пока есть несохранённые правки, строка подсвечена, «Сохранить» — яркая ── */
 const LessonRow = ({ lesson, index, count, onChanged }) => {
   const [form, setForm] = useState({
     title: lesson.title ?? '',
     description: lesson.description ?? '',
     videoUrl: lesson.videoKey ?? '',
+    coverUrl: lesson.coverKey ?? '',
   });
   const [busy, setBusy] = useState(false);
 
@@ -30,7 +31,8 @@ const LessonRow = ({ lesson, index, count, onChanged }) => {
   const dirty =
     form.title !== (lesson.title ?? '') ||
     form.description !== (lesson.description ?? '') ||
-    form.videoUrl !== (lesson.videoKey ?? '');
+    form.videoUrl !== (lesson.videoKey ?? '') ||
+    form.coverUrl !== (lesson.coverKey ?? '');
 
   // Текущая позиция урока = index + 1 (бэк держит номера подряд)
   const payload = (order) => ({ ...form, order });
@@ -121,6 +123,21 @@ const LessonRow = ({ lesson, index, count, onChanged }) => {
         />
       </div>
 
+      <div className={styles.row}>
+        <input
+          className="input"
+          placeholder="Обложка 16:9 — ссылка или ключ в бакете"
+          value={form.coverUrl}
+          onChange={set('coverUrl')}
+        />
+        <DirectUploadButton
+          prefix="lessons"
+          label="Загрузить обложку"
+          onUploaded={(key) => setForm((f) => ({ ...f, coverUrl: key }))}
+        />
+      </div>
+      {lesson.cover && <img className={styles.preview} src={lesson.cover} alt="" />}
+
       <AutoTextarea
         className={`input ${styles.textarea}`}
         placeholder="Описание под видео"
@@ -190,6 +207,7 @@ const AdminModulePage = () => {
         title: '',
         description: null,
         videoUrl: null,
+        coverUrl: null,
       });
       toast.success('Урок добавлен');
       load();

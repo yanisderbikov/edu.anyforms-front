@@ -36,6 +36,7 @@ export interface LessonRequestDTO {
   title: string;
   description?: string;
   videoUrl?: string;
+  coverUrl?: string;
 }
 
 export interface CourseRequestDTO {
@@ -124,6 +125,8 @@ export interface LessonDTO {
   description?: string;
   videoUrl?: string;
   videoKey?: string;
+  cover?: string;
+  coverKey?: string;
 }
 
 export interface ModuleDTO {
