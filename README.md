@@ -61,6 +61,7 @@ npm run dev        # ходит на локальный бэк :8091 (см. .env
 | Иконки (таб браузера, экран телефона) | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` в [public](public) — те же файлы, что на anyforms-front |
 | Индексация | [public/robots.txt](public/robots.txt), [public/sitemap.xml](public/sitemap.xml) |
 
+
 В индекс пускаем только `/` и `/login` (анонимный заход на `/` уезжает на
 логин редиректом, поэтому у страницы входа то же описание и `canonical` на `/`).
 Онбординг, уроки и админка — `noindex,nofollow` плюс `Disallow` в robots.txt.
