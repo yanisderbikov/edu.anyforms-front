@@ -148,6 +148,7 @@ a.card:hover .cardImage {
   line-height: 1.4;
   color: var(--text-dim);
   flex: 1;
+  white-space: pre-line;
 }
 
 .cardOpenNote {

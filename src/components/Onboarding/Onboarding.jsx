@@ -168,7 +168,7 @@ const Onboarding = () => {
           <img className={styles.image} src={slide.image} alt="" loading="lazy" />
         )}
 
-        {slide.note && <p className={`lead ${styles.note}`}>{slide.note}</p>}
+        {slide.note && <p className={`lead multiline ${styles.note}`}>{slide.note}</p>}
 
         {slide.points && (
           <ul className={styles.points}>

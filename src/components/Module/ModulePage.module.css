@@ -108,6 +108,7 @@
   line-height: 1.4;
   color: var(--text-dim);
   max-width: 64ch;
+  white-space: pre-line;
 }
 
 /* ── Ачивка «модуль пройден» ── */

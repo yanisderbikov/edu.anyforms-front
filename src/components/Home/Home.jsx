@@ -125,7 +125,7 @@ const Home = () => {
                     {data.course.title.split(' ').slice(1).join(' ')}
                   </span>
                 </h1>
-                <p className="lead">{data.course.subtitle}</p>
+                <p className="lead multiline">{data.course.subtitle}</p>
               </div>
               {/* Сводка: сколько модулей пройдено целиком.
                   Десктоп — крупное кольцо, мобилка — компактное напротив заголовка */}

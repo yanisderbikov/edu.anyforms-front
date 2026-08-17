@@ -91,7 +91,7 @@ const ModulePage = () => {
               <h1 className="h2">
                 <span className="hAccent">{module.title}</span>
               </h1>
-              <p className="lead">{module.description}</p>
+              <p className="lead multiline">{module.description}</p>
             </div>
 
             <div className={styles.lessons}>
