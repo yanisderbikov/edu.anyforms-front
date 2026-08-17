@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+# /login не закрываем: анонимный заход на / уезжает туда редиректом,
+# и если краулеру запретить страницу входа — главная выпадет из индекса
+Disallow: /onboarding
+Disallow: /module
+Disallow: /admin
+
+Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term&ysclid&yclid&gclid /
+
+Sitemap: https://edu.anyforms.ru/sitemap.xml

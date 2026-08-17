@@ -41,6 +41,34 @@ npm run dev        # ходит на локальный бэк :8091 (см. .env
 - **Базовый дизайн** — [src/styles/base.css](src/styles/base.css): все цвета, шрифты,
   размеры заголовков и скругления. Меняем токены там — дизайн меняется во всём проекте.
 - **Прогресс клиента** (онбординг, просмотренные уроки) хранится в БД бэкенда (`/api/me`).
+- **SEO** — [src/shared/pageSeo.js](src/shared/pageSeo.js): один источник правды для
+  title/description/OG (см. ниже).
+
+## SEO
+
+Домен — `https://edu.anyforms.ru` (константа `SITE_URL` в
+[src/shared/pageSeo.js](src/shared/pageSeo.js), там же тексты страниц).
+
+Схема как в anyforms-front, но без SSR: приложение целиком под авторизацией,
+пререндерить нечего.
+
+| Что | Где |
+|---|---|
+| Тексты мета всех страниц + микроразметка `Course` | [src/shared/pageSeo.js](src/shared/pageSeo.js) |
+| Мета главной прямо в HTML (краулеры и превью в мессенджерах читают без JS) | vite-плагин `inject-home-seo` в [vite.config.js](vite.config.js) → плейсхолдер `<!--seo-->` в [index.html](index.html) |
+| Мета при переходах внутри SPA | хук `useSeo()` в [src/shared/seo.js](src/shared/seo.js), вызывается в `App` |
+| Картинка превью (`og:image`) | логотип anyforms на внешнем сторадже — тот же файл, что в anyforms-front (`DEFAULT_OG_IMAGE`) |
+| Иконки (таб браузера, экран телефона) | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` в [public](public) — те же файлы, что на anyforms-front |
+| Индексация | [public/robots.txt](public/robots.txt), [public/sitemap.xml](public/sitemap.xml) |
+
+В индекс пускаем только `/` и `/login` (анонимный заход на `/` уезжает на
+логин редиректом, поэтому у страницы входа то же описание и `canonical` на `/`).
+Онбординг, уроки и админка — `noindex,nofollow` плюс `Disallow` в robots.txt.
+Чтобы убрать платформу из поиска целиком: `indexable: false` у `HOME_SEO`
+и `Disallow: /` в robots.txt.
+
+Текст мета правим **только** в `pageSeo.js` — и HTML, и клиент берут его оттуда.
+Если убрать `<!--seo-->` из `index.html`, сборка упадёт с понятной ошибкой.
 
 ## Роуты
 

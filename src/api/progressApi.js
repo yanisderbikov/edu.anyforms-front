@@ -58,6 +58,11 @@ export const fetchProgress = async () => {
   }
 };
 
+/** Синхронный снимок прогресса (или null, если ещё не загружали).
+ *  Нужен роутеру: решение «пускать или в онбординг» принимается прямо в рендере,
+ *  ждать промис там нельзя, а собственный state гварда отстаёт на рендер. */
+export const getCachedProgress = () => (cache ? applyFallback(cache) : null);
+
 export const invalidateProgress = () => {
   cache = null;
 };
@@ -75,7 +80,14 @@ export const completeLesson = async (lessonId) => {
 
 export const finishOnboarding = async () => {
   const res = await apiClient.instance.post('/api/me/onboarding-done');
-  cache = res.data;
-  clearOnboardingFallback();
+  if (res.data?.onboardingDone) {
+    cache = res.data;
+    clearOnboardingFallback();
+    return cache;
+  }
+  // Ответ без подтверждения (пустое тело, прокси) — не затираем прогресс нулём
+  // и страхуемся локальной отметкой, иначе роутер вернёт человека в онбординг
+  markOnboardingFallback();
+  cache = { completedLessonIds: [], ...cache, onboardingDone: true };
   return cache;
 };

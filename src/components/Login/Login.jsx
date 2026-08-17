@@ -86,7 +86,10 @@ const Login = () => {
           />
 
           <div className={styles.formCol}>
-            <span className="eyebrow">Вход на платформу</span>
+            {/* Единственная публичная страница: сюда попадает и анонимный
+                посетитель, и поисковик — поэтому прямо в тексте сказано,
+                что это за платформа и какой здесь курс */}
+            <span className="eyebrow">Платформа обучения anyforms</span>
 
             {step === 'email' ? (
               <>
@@ -94,7 +97,8 @@ const Login = () => {
                   {getGreeting()}! <span className="hAccent">Войдите</span>, чтобы начать
                 </h1>
                 <p className="lead">
-                  Введите e-mail, на который куплен курс, — мы пришлём код для входа.
+                  Здесь проходит курс по производству силиконовых форм. Введите e-mail,
+                  на который вы его купили, — мы пришлём код для входа.
                 </p>
                 <form className={styles.form} onSubmit={submitEmail}>
                   <input

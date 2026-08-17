@@ -3,8 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/favicon.svg" />
-    <title>anyforms · обучение</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#151515" />
+    <!-- Inter грузится из base.css: соединение поднимаем заранее -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Мета главной (title, description, og/twitter, canonical, микроразметка)
+      подставляет vite-плагин из src/shared/pageSeo.js — см. vite.config.js.
+      Один источник правды: те же значения при переходах ставит src/shared/seo.js.
+      Плейсхолдер удалять нельзя — сборка упадёт с понятной ошибкой.
+    -->
+    <!--seo-->
   </head>
   <body>
     <div id="root"></div>

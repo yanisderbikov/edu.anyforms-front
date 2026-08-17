@@ -57,6 +57,34 @@ const buildSlides = (data) => {
 
 const SLIDE_MS = 260; // длительность анимации ухода слайда (синхронно с CSS)
 const FINISH_MS = 420; // длительность «улёта» при завершении онбординга (синхронно с CSS)
+const SAVE_MS = 4000; // сколько ждём ответ бэка, прежде чем уйти по локальной отметке
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Пишем «онбординг пройден» в БД. Сервер может ответить ошибкой или не ответить
+ * вовсе (таймаута у axios нет) — тогда ставим локальную отметку и идём дальше:
+ * держать человека на последнем слайде нельзя. Промис всегда успешный.
+ */
+const saveOnboardingDone = () =>
+  new Promise((resolve) => {
+    const slow = setTimeout(() => {
+      markOnboardingFallback();
+      resolve();
+    }, SAVE_MS);
+
+    finishOnboarding()
+      .catch((err) => {
+        // Сервер не смог записать — помечаем локально, чтобы роутер
+        // не вернул человека в онбординг по кругу
+        markOnboardingFallback();
+        toastError(err);
+      })
+      .finally(() => {
+        clearTimeout(slow);
+        resolve();
+      });
+  });
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -77,13 +105,7 @@ const Onboarding = () => {
   // Слайдов нет (админ их удалил) — сразу на главную
   useEffect(() => {
     if (data && slides.length === 0) {
-      finishOnboarding()
-        .catch((err) => {
-          // Сервер не смог записать — помечаем локально, чтобы не зациклиться
-          markOnboardingFallback();
-          toastError(err);
-        })
-        .finally(() => navigate('/', { replace: true }));
+      saveOnboardingDone().then(() => navigate('/', { replace: true }));
     }
   }, [data, slides.length, navigate]);
 
@@ -103,22 +125,17 @@ const Onboarding = () => {
   };
 
   const next = () => {
-    if (slide.isLast) {
-      if (finishing) return;
-      setFinishing(true);
-      // Статус пишем в БД параллельно с анимацией «улёта».
-      // Если сервер не ответил — говорим об этом и ставим локальную отметку,
-      // иначе роутер вернёт человека обратно в онбординг по кругу
-      const saved = finishOnboarding().catch((err) => {
-        markOnboardingFallback();
-        toastError(err);
-      });
-      setTimeout(() => {
-        saved.finally(() => navigate('/', { replace: true }));
-      }, FINISH_MS);
-    } else {
+    if (!slide.isLast) {
       go(index + 1, 1);
+      return;
     }
+    if (finishing) return;
+    setFinishing(true);
+    // Статус пишем в БД параллельно с анимацией «улёта»: уходим на главную,
+    // когда доиграла анимация и статус записан (или истекло ожидание ответа)
+    Promise.all([saveOnboardingDone(), wait(FINISH_MS)]).then(() =>
+      navigate('/', { replace: true })
+    );
   };
 
   const back = () => {
