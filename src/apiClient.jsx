@@ -102,6 +102,40 @@ apiClient.getJwtMetadata = () => {
     }
 };
 
+const HOME_PATH = '/';
+const LOGIN_PATH = '/login';
+
+// Отметка «уже уводили на главную из-за 403». Редирект перезагружает страницу,
+// поэтому память не годится — храним в sessionStorage. Отметка живёт секунды:
+// её задача — поймать повторный 403 сразу после ухода (в том числе когда роутер
+// увёл с главной дальше), а не запомнить сбой на всю сессию.
+const bounceKey = 'edu_403_bounce_at';
+const bounceWindowMs = 5000;
+
+const markBounce = () => {
+    try {
+        sessionStorage.setItem(bounceKey, String(Date.now()));
+    } catch {
+        /* приватный режим — переживём, защитит проверка пути */
+    }
+};
+
+const bouncedJustNow = () => {
+    try {
+        const at = Number(sessionStorage.getItem(bounceKey));
+        return at > 0 && Date.now() - at < bounceWindowMs;
+    } catch {
+        return false;
+    }
+};
+
+// Уводим жёстко, а промис оставляем висеть: локальные catch'и не должны
+// мигать ошибкой на странице, которая всё равно сейчас сменится.
+const leaveTo = (path) => {
+    window.location.assign(path);
+    return new Promise(() => {});
+};
+
 apiClient.instance.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -112,16 +146,29 @@ apiClient.instance.interceptors.response.use(
                 config: error.response.config,
             });
 
-            // 401 — токен протух или вход с другого устройства погасил сессию.
-            // 403 с мёртвым токеном — то же самое. Валидный токен без нужной роли
-            // на логин не бросаем (иначе петля) — это разруливает гвард в AdminLayout.
             const path = window.location.pathname;
             const status = error.response.status;
-            if (path !== '/login'
-                && (status === 401 || (status === 403 && !apiClient.hasLiveToken()))) {
-                apiClient.clearToken();
-                window.location.assign('/login');
-                return new Promise(() => {});
+
+            if (path !== LOGIN_PATH) {
+                // 401 — токен протух или вход с другого устройства погасил сессию.
+                if (status === 401) {
+                    apiClient.clearToken();
+                    return leaveTo(LOGIN_PATH);
+                }
+
+                if (status === 403) {
+                    // Прав не хватает — уводим на главную. Но если 403 прилетел
+                    // уже с главной (или сразу после такого ухода), либо токен
+                    // мёртвый — главная не поможет, нужен вход заново.
+                    // Токен при этом гасим: с живым токеном /login сразу вернёт
+                    // на главную и получится петля.
+                    if (path === HOME_PATH || bouncedJustNow() || !apiClient.hasLiveToken()) {
+                        apiClient.clearToken();
+                        return leaveTo(LOGIN_PATH);
+                    }
+                    markBounce();
+                    return leaveTo(HOME_PATH);
+                }
             }
         }
 

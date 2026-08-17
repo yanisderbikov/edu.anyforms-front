@@ -9,9 +9,10 @@ import styles from './Admin.module.css';
 
 /** Каркас админки: шапка, вкладки разделов, защита по роли */
 const AdminLayout = ({ children }) => {
-  // Не админ — молча уводим на логин (API в любом случае закрыт ролью)
+  // Не админ — молча уводим на главную, как и при 403 от API (см. apiClient).
+  // Гостя с главной дальше отправит RequireAuth — на логин.
   if (!isAdmin()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const tabClass = ({ isActive }) =>
