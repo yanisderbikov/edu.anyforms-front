@@ -111,6 +111,62 @@
   white-space: pre-line;
 }
 
+/* ── Материалы урока: скачиваемые файлы ── */
+.files {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.filesTitle {
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.fileLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 11px 18px 11px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--fs-small);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fileLink:hover {
+  background: var(--panel-hover);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.fileIcon {
+  flex: none;
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.fileName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileSize {
+  flex: none;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
 /* ── Ачивка «модуль пройден» ── */
 .achievement {
   position: fixed;

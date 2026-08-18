@@ -11,7 +11,10 @@ import {
   createLesson,
   updateLesson,
   deleteLesson,
+  createLessonFile,
+  deleteLessonFile,
 } from '../../api/adminApi';
+import { formatFileSize } from '../../shared/format';
 import styles from './Admin.module.css';
 
 /* ── Урок: заголовок, видео, обложка, описание. Порядок — стрелками вверх/вниз.
@@ -70,6 +73,27 @@ const LessonRow = ({ lesson, index, count, onChanged }) => {
     try {
       await deleteLesson(lesson.id);
       toast.success('Урок удалён');
+      onChanged();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  /* Файлы, в отличие от полей урока, сохраняются сразу — без кнопки «Сохранить» */
+  const attachFile = async (key, file) => {
+    await createLessonFile(lesson.id, {
+      name: file.name,
+      fileUrl: key,
+      sizeBytes: file.size,
+    });
+    onChanged();
+  };
+
+  const removeFile = async (file) => {
+    if (!window.confirm(`Удалить файл «${file.name}»?`)) return;
+    try {
+      await deleteLessonFile(file.id);
+      toast.success('Файл удалён');
       onChanged();
     } catch (err) {
       toastError(err);
@@ -145,6 +169,35 @@ const LessonRow = ({ lesson, index, count, onChanged }) => {
         value={form.description}
         onChange={set('description')}
       />
+
+      <div className={styles.filesBlock}>
+        <span className={styles.filesCaption}>
+          Файлы урока — студент сможет их скачать; прикрепляются и удаляются сразу
+        </span>
+        {(lesson.files ?? []).map((f) => (
+          <div key={f.id} className={styles.fileRow}>
+            <a className={styles.fileName} href={f.url} target="_blank" rel="noreferrer">
+              {f.name}
+            </a>
+            {f.sizeBytes != null && (
+              <span className={styles.fileSize}>{formatFileSize(f.sizeBytes)}</span>
+            )}
+            <button
+              type="button"
+              className={`${styles.smallBtn} ${styles.danger}`}
+              onClick={() => removeFile(f)}
+            >
+              Удалить
+            </button>
+          </div>
+        ))}
+        <DirectUploadButton
+          prefix="files"
+          label="+ Прикрепить файл"
+          doneMessage="Файл прикреплён к уроку"
+          onUploaded={attachFile}
+        />
+      </div>
 
       <div className={styles.row}>
         <button

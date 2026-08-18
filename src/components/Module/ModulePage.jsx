@@ -4,7 +4,21 @@ import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
 import { fetchCourse } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
+import { formatFileSize } from '../../shared/format';
 import styles from './ModulePage.module.css';
+
+/* Стрелка «скачать» у материала урока */
+const DownloadIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path
+      d="M8 2.5v7m0 0 3-3m-3 3-3-3M3 13.5h10"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 /* Кусочки конфетти для ачивки: детерминированные, чтобы не дёргались при ререндере */
 const CONFETTI = Array.from({ length: 24 }, (_, i) => ({
@@ -117,6 +131,31 @@ const ModulePage = () => {
                       onEnded={() => handleEnded(lesson)}
                     />
                     <p className={styles.lessonDesc}>{lesson.description}</p>
+
+                    {/* Скачиваемые материалы: ссылка подписана бэкендом,
+                        браузер сохранит файл под исходным именем */}
+                    {lesson.files?.length > 0 && (
+                      <div className={styles.files}>
+                        <span className={styles.filesTitle}>Материалы урока</span>
+                        {lesson.files.map((f) => (
+                          <a
+                            key={f.id}
+                            className={styles.fileLink}
+                            href={f.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <span className={styles.fileIcon}>
+                              <DownloadIcon />
+                            </span>
+                            <span className={styles.fileName}>{f.name}</span>
+                            {f.sizeBytes != null && (
+                              <span className={styles.fileSize}>{formatFileSize(f.sizeBytes)}</span>
+                            )}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </section>
                 );
               })}

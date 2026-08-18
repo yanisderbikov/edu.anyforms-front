@@ -32,6 +32,14 @@ export const updateLesson = (id, data) => call(apiClient.instance.put(`/api/admi
 
 export const deleteLesson = (id) => call(apiClient.instance.delete(`/api/admin/lessons/${id}`));
 
+/* ── Файлы урока ── */
+
+/** Файл уже в S3 (см. presignUpload) — прикрепляем к уроку имя, ключ и размер */
+export const createLessonFile = (lessonId, data) =>
+  call(apiClient.instance.post(`/api/admin/lessons/${lessonId}/files`, data));
+
+export const deleteLessonFile = (fileId) => call(apiClient.instance.delete(`/api/admin/files/${fileId}`));
+
 /* ── Онбординг ── */
 
 export const getAdminOnboarding = () => call(apiClient.instance.get('/api/admin/onboarding'));

@@ -37,7 +37,12 @@ const AdminLayout = ({ children }) => {
 };
 
 /** Загрузка напрямую в S3: бэкенд подписывает URL, файл идёт мимо него */
-export const DirectUploadButton = ({ prefix, onUploaded, label }) => {
+export const DirectUploadButton = ({
+  prefix,
+  onUploaded,
+  label,
+  doneMessage = 'Файл загружен — не забудьте сохранить',
+}) => {
   const inputRef = useRef(null);
   const [progress, setProgress] = useState(null); // null = не грузим, число = %
 
@@ -49,8 +54,9 @@ export const DirectUploadButton = ({ prefix, onUploaded, label }) => {
     try {
       const { uploadUrl, key } = await presignUpload(file.name, file.type, prefix);
       await uploadToS3(uploadUrl, file, setProgress);
-      onUploaded(key);
-      toast.success('Файл загружен — не забудьте сохранить');
+      // await — если обработчик сам сохраняет на бэке, ошибка попадёт в catch
+      await onUploaded(key, file);
+      toast.success(doneMessage);
     } catch (err) {
       toastError(err);
     } finally {
