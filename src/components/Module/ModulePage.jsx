@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import KinescopePlayer from '@kinescope/react-kinescope-player';
 import apiClient from '../../apiClient';
@@ -9,6 +9,13 @@ import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
 import { parseKinescope } from '../../shared/kinescope';
 import styles from './ModulePage.module.css';
+
+/* Урок засчитывается, когда просмотрено столько ролика */
+const COMPLETE_AT = 0.95;
+
+/* Скачок времени больше этого — перемотка, а не просмотр:
+   события плеера идут чаще раза в секунду */
+const SEEK_GAP_SECONDS = 2;
 
 /* Стрелка «скачать» у материала урока */
 const DownloadIcon = () => (
@@ -42,6 +49,10 @@ const ModulePage = () => {
   const [videoToken, setVideoToken] = useState(null);
   const [videoTokenReady, setVideoTokenReady] = useState(false);
   const [ratios, setRatios] = useState({}); // lessonId → реальные пропорции из плеера
+  /* lessonId → { duration, last, total }: сколько ролика реально просмотрено.
+     В ref, а не в state — события времени идут часто, ререндеры тут не нужны */
+  const watched = useRef({});
+  const sending = useRef(new Set()); // уроки, по которым отметка уже уходит на бэк
 
   useEffect(() => {
     fetchCourse().then(setData).catch((e) => setError(e.message));
@@ -103,14 +114,39 @@ const ModulePage = () => {
     [module, completed]
   );
 
-  /* Видео досмотрено до конца → отмечаем урок пройденным.
-     С бэкендом здесь будет POST, а «просмотрен полностью» решит сервер. */
-  const handleEnded = async (lesson) => {
-    if (completed.has(lesson.id)) return;
-    const next = await completeLesson(lesson.id);
-    setCompleted(new Set(next));
-    const allDone = module.lessons.every((l) => next.has(l.id));
-    if (allDone) setAchievement(true);
+  /* Урок просмотрен → отмечаем на бэке. Вызывается и по концу ролика,
+     и по достижению 90%; повторные вызовы отсекаем, пока летит запрос. */
+  const markWatched = async (lesson) => {
+    if (completed.has(lesson.id) || sending.current.has(lesson.id)) return;
+    sending.current.add(lesson.id);
+    try {
+      const next = await completeLesson(lesson.id);
+      setCompleted(new Set(next));
+      const allDone = module.lessons.every((l) => next.has(l.id));
+      if (allDone) setAchievement(true);
+    } catch (e) {
+      // Не отметилось — разрешаем следующую попытку, иначе урок «зависнет» непройденным
+      sending.current.delete(lesson.id);
+      console.error('Не удалось отметить урок пройденным:', e);
+    }
+  };
+
+  /* Длительность приходит отдельным событием — без неё считать долю не от чего */
+  const trackDuration = (lesson, duration) => {
+    if (!(duration > 0)) return;
+    const entry = watched.current[lesson.id] ?? { last: 0, total: 0 };
+    watched.current[lesson.id] = { ...entry, duration };
+  };
+
+  /* Копим реально просмотренное время: перемотка в конец урок не засчитает,
+     потому что прыжки в total не попадают */
+  const trackTime = (lesson, currentTime) => {
+    const entry = watched.current[lesson.id];
+    if (!entry?.duration || completed.has(lesson.id)) return;
+    const delta = currentTime - entry.last;
+    if (delta > 0 && delta < SEEK_GAP_SECONDS) entry.total += delta;
+    entry.last = currentTime;
+    if (entry.total / entry.duration >= COMPLETE_AT) markWatched(lesson);
   };
 
   return (
@@ -193,7 +229,13 @@ const ModulePage = () => {
                                       : { ...r, [lesson.id]: ar }
                                   );
                                 }}
-                                onEnded={() => handleEnded(lesson)}
+                                onDurationChange={({ duration }) =>
+                                  trackDuration(lesson, duration)
+                                }
+                                onTimeUpdate={({ currentTime }) =>
+                                  trackTime(lesson, currentTime)
+                                }
+                                onEnded={() => markWatched(lesson)}
                               />
                             )}
                           </div>
@@ -207,7 +249,9 @@ const ModulePage = () => {
                         controls
                         preload="metadata"
                         playsInline
-                        onEnded={() => handleEnded(lesson)}
+                        onDurationChange={(e) => trackDuration(lesson, e.target.duration)}
+                        onTimeUpdate={(e) => trackTime(lesson, e.target.currentTime)}
+                        onEnded={() => markWatched(lesson)}
                       />
                     )}
                     <p className={styles.lessonDesc}>{lesson.description}</p>
