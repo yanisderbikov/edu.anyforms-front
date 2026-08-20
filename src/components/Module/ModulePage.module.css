@@ -295,3 +295,17 @@
     opacity: 0.6;
   }
 }
+
+/* ── Скелетоны загрузки: повторяют номер урока и место под видео ── */
+.skNum {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.skVideo {
+  width: min(100%, calc(46vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius);
+}

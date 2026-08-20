@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import ProgressRing from '../shared/ProgressRing';
 import { getAuth, logout } from '../../auth';
 import { fetchCourse } from '../../api/courseApi';
-import { fetchCompletedLessons } from '../../api/progressApi';
 import styles from './Home.module.css';
 
 const PersonIcon = () => (
@@ -46,10 +46,42 @@ const formatOpensAt = (iso) => {
   return `Откроется ${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`;
 };
 
+/* Призрак главной: та же сетка и те же карточки, только вместо содержимого —
+   серые блоки. Пользователь сразу видит, куда что встанет, и не смотрит в пустоту */
+const HomeSkeleton = () => (
+  <>
+    <div className={styles.headRow}>
+      <div className={styles.head}>
+        <Skeleton width={90} height={11} />
+        <Skeleton width="min(100%, 420px)" height={34} />
+        <Skeleton width="min(100%, 560px)" height={15} />
+        <Skeleton width="min(100%, 380px)" height={15} />
+      </div>
+      <Skeleton className={styles.skRing} />
+    </div>
+
+    <div className={styles.grid}>
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className={styles.card}>
+          <div className={styles.cardImageWrap}>
+            <Skeleton className={styles.skImage} />
+          </div>
+          <div className={styles.cardHead}>
+            <Skeleton className={styles.skNum} />
+            <Skeleton width="55%" height={19} />
+          </div>
+          <Skeleton height={13} />
+          <Skeleton width="72%" height={13} />
+          <Skeleton width="40%" height={13} />
+        </div>
+      ))}
+    </div>
+  </>
+);
+
 const Home = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
-  const [completed, setCompleted] = useState(new Set());
   const [error, setError] = useState('');
   const [accountOpen, setAccountOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -57,14 +89,13 @@ const Home = () => {
 
   useEffect(() => {
     fetchCourse().then(setData).catch((e) => setError(e.message));
-    fetchCompletedLessons().then(setCompleted).catch(() => {});
   }, []);
 
-  /** Сколько уроков модуля досмотрено */
-  const doneInModule = (m) => m.lessons.filter((l) => completed.has(l.id)).length;
+  /** Сколько уроков модуля досмотрено — счётчик приходит с бэкенда */
+  const doneInModule = (m) => m.lessonsDone;
 
   /** Модуль пройден = есть уроки и все досмотрены */
-  const isModuleDone = (m) => m.lessons.length > 0 && doneInModule(m) === m.lessons.length;
+  const isModuleDone = (m) => m.lessonsCount > 0 && m.lessonsDone === m.lessonsCount;
 
   // Закрываем меню ЛК по клику мимо
   useEffect(() => {
@@ -112,7 +143,7 @@ const Home = () => {
             <SupportHint>{error}</SupportHint>
           </p>
         )}
-        {!data && !error && <p className={styles.loading}>Загружаем курс…</p>}
+        {!data && !error && <HomeSkeleton />}
 
         {data && (
           <>
@@ -155,9 +186,9 @@ const Home = () => {
                         {locked ? <LockIcon /> : m.order}
                       </span>
                       <h2 className="h3">{m.title}</h2>
-                      {!locked && m.lessons.length > 0 && (
+                      {!locked && m.lessonsCount > 0 && (
                         <span className={styles.cardRing}>
-                          <ProgressRing done={doneInModule(m)} total={m.lessons.length} size={44} stroke={4} />
+                          <ProgressRing done={doneInModule(m)} total={m.lessonsCount} size={44} stroke={4} />
                         </span>
                       )}
                     </div>
@@ -165,7 +196,7 @@ const Home = () => {
                     <span className={locked ? styles.cardLockNote : styles.cardOpenNote}>
                       {locked
                         ? formatOpensAt(m.opensAt)
-                        : `${m.lessons.length} ${m.lessons.length === 1 ? 'урок' : 'урока'} · Смотреть →`}
+                        : `${m.lessonsCount} ${m.lessonsCount === 1 ? 'урок' : 'урока'} · Смотреть →`}
                     </span>
                   </>
                 );

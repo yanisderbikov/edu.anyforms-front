@@ -3,17 +3,29 @@ import apiClient, { apiErrorMessage } from '../apiClient';
 /**
  * Данные курса с бэкенда (JWT подставляет apiClient;
  * 401 разруливает его интерсептор — уводит на логин).
+ *
+ * Кэша нет намеренно: главная берёт только превью модулей, страница модуля —
+ * свой модуль с уроками. Каждый заход показывает актуальные данные, а
+ * подписанные ссылки S3 не успевают протухнуть на открытой вкладке.
  */
-let cache = null;
 
+/** Шапка курса и превью модулей — без уроков, только счётчики для карточек */
 export const fetchCourse = async () => {
-  if (cache) return cache;
   try {
     const res = await apiClient.instance.get('/api/course');
-    cache = res.data;
-    return cache;
+    return res.data;
   } catch (e) {
     throw new Error(apiErrorMessage(e, 'Не удалось загрузить курс'));
+  }
+};
+
+/** Один модуль с уроками — для страницы модуля */
+export const fetchModule = async (moduleId) => {
+  try {
+    const res = await apiClient.instance.get(`/api/course/modules/${moduleId}`);
+    return res.data;
+  } catch (e) {
+    throw new Error(apiErrorMessage(e, 'Не удалось загрузить модуль'));
   }
 };
 

@@ -281,3 +281,32 @@ a.card:hover .cardImage {
 .supportMenu a:hover {
   background: rgba(255, 255, 255, 0.08);
 }
+
+/* ── Скелетоны загрузки: размеры повторяют реальные элементы карточки ── */
+.skImage {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.skNum {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+/* На месте кольца прогресса — круг того же размера */
+.skRing {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+}
+
+@media (max-width: 759px) {
+  .skRing {
+    width: 64px;
+    height: 64px;
+  }
+}

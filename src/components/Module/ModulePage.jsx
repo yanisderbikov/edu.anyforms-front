@@ -4,7 +4,8 @@ import KinescopePlayer from '@kinescope/react-kinescope-player';
 import apiClient from '../../apiClient';
 import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
-import { fetchCourse, fetchVideoToken } from '../../api/courseApi';
+import Skeleton from '../shared/Skeleton/Skeleton';
+import { fetchModule, fetchVideoToken } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
 import { parseKinescope } from '../../shared/kinescope';
@@ -39,9 +40,34 @@ const CONFETTI = Array.from({ length: 24 }, (_, i) => ({
   size: 7 + (i % 3) * 3,
 }));
 
+/* Призрак страницы модуля: заголовок, а под ним уроки с местом под видео */
+const ModuleSkeleton = () => (
+  <>
+    <div className={styles.head}>
+      <Skeleton width={80} height={11} />
+      <Skeleton width="min(100%, 380px)" height={34} />
+      <Skeleton width="min(100%, 540px)" height={15} />
+    </div>
+
+    <div className={styles.lessons}>
+      {[0, 1].map((i) => (
+        <section key={i} className={styles.lesson}>
+          <div className={styles.lessonHead}>
+            <Skeleton className={styles.skNum} />
+            <Skeleton width="45%" height={22} />
+          </div>
+          <Skeleton className={styles.skVideo} />
+          <Skeleton width="min(100%, 64ch)" height={15} />
+          <Skeleton width="min(80%, 52ch)" height={15} />
+        </section>
+      ))}
+    </div>
+  </>
+);
+
 const ModulePage = () => {
   const { moduleId } = useParams();
-  const [data, setData] = useState(null);
+  const [module, setModule] = useState(null);
   const [error, setError] = useState('');
   const [completed, setCompleted] = useState(new Set());
   const [scroll, setScroll] = useState(0);
@@ -55,18 +81,18 @@ const ModulePage = () => {
   const sending = useRef(new Set()); // уроки, по которым отметка уже уходит на бэк
 
   useEffect(() => {
-    fetchCourse().then(setData).catch((e) => setError(e.message));
-    fetchCompletedLessons().then(setCompleted);
-  }, []);
+    setModule(null);
+    setError('');
+    fetchModule(moduleId).then(setModule).catch((e) => setError(e.message));
+    fetchCompletedLessons().then(setCompleted).catch(() => {});
+  }, [moduleId]);
 
   /* Токен воспроизведения Kinescope: плеер отдаёт его Kinescope, а тот приходит
      на наш бэкенд спросить, пускать ли этого зрителя (DRM-авторизация).
      Плееры монтируем только после ответа, чтобы не пересоздавать их с токеном */
   useEffect(() => {
-    if (!data) return;
-    const hasKinescope = data.modules.some((m) =>
-      m.lessons?.some((l) => parseKinescope(l.videoUrl))
-    );
+    if (!module) return;
+    const hasKinescope = module.lessons?.some((l) => parseKinescope(l.videoUrl));
     if (!hasKinescope) {
       setVideoTokenReady(true);
       return;
@@ -76,7 +102,7 @@ const ModulePage = () => {
       // Не получили — плеер пробует без токена (играет, пока авторизация не строгая)
       .catch(() => {})
       .finally(() => setVideoTokenReady(true));
-  }, [data]);
+  }, [module]);
 
   // Скролл-прогресс страницы для полоски в шапке
   useEffect(() => {
@@ -87,9 +113,7 @@ const ModulePage = () => {
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [data]);
-
-  const module = data?.modules.find((m) => m.id === moduleId);
+  }, [module]);
 
   /* Динамическая вотермарка Kinescope: поверх видео всплывает email студента,
      чтобы запись экрана можно было отследить до конкретного аккаунта.
@@ -169,9 +193,7 @@ const ModulePage = () => {
             <SupportHint>{error}</SupportHint>
           </p>
         )}
-        {!data && !error && <p className={styles.loading}>Загружаем модуль…</p>}
-
-        {data && !module && <p className={styles.error}>Модуль не найден.</p>}
+        {!module && !error && <ModuleSkeleton />}
 
         {module && module.status !== 'open' && (
           <p className={styles.error}>Этот модуль ещё не открыт.</p>
