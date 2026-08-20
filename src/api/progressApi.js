@@ -1,4 +1,5 @@
 import apiClient, { apiErrorMessage } from '../apiClient';
+import { invalidateCourse } from './courseApi';
 
 /**
  * Прогресс живёт в БД (/api/me): онбординг и просмотренные уроки
@@ -74,6 +75,8 @@ export const fetchCompletedLessons = async () => {
 
 export const completeLesson = async (lessonId) => {
   const res = await apiClient.instance.post(`/api/me/lessons/${lessonId}/complete`);
+  // На главной поменялись кольца прогресса — её кэш больше не актуален
+  invalidateCourse();
   cache = applyFallback(res.data);
   return new Set(cache.completedLessonIds);
 };

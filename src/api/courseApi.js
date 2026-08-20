@@ -4,16 +4,26 @@ import apiClient, { apiErrorMessage } from '../apiClient';
  * Данные курса с бэкенда (JWT подставляет apiClient;
  * 401 разруливает его интерсептор — уводит на логин).
  *
- * Кэша нет намеренно: главная берёт только превью модулей, страница модуля —
- * свой модуль с уроками. Каждый заход показывает актуальные данные, а
- * подписанные ссылки S3 не успевают протухнуть на открытой вкладке.
+ * Всё кэшируется в памяти: главная и каждый открытый модуль. Перезагрузка
+ * страницы или новая вкладка берут данные заново — так подписанные ссылки
+ * S3 не успевают протухнуть, а повторные переходы идут без запросов.
  */
+let cache = null;
+const moduleCache = new Map(); // moduleId → модуль с уроками
+
+/** Сбросить кэши: при выходе, после просмотра урока и по битой картинке */
+export const invalidateCourse = () => {
+  cache = null;
+  moduleCache.clear();
+};
 
 /** Шапка курса и превью модулей — без уроков, только счётчики для карточек */
 export const fetchCourse = async () => {
+  if (cache) return cache;
   try {
     const res = await apiClient.instance.get('/api/course');
-    return res.data;
+    cache = res.data;
+    return cache;
   } catch (e) {
     throw new Error(apiErrorMessage(e, 'Не удалось загрузить курс'));
   }
@@ -21,8 +31,11 @@ export const fetchCourse = async () => {
 
 /** Один модуль с уроками — для страницы модуля */
 export const fetchModule = async (moduleId) => {
+  const cached = moduleCache.get(moduleId);
+  if (cached) return cached;
   try {
     const res = await apiClient.instance.get(`/api/course/modules/${moduleId}`);
+    moduleCache.set(moduleId, res.data);
     return res.data;
   } catch (e) {
     throw new Error(apiErrorMessage(e, 'Не удалось загрузить модуль'));

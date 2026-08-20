@@ -5,6 +5,7 @@
  */
 import apiClient, { apiErrorMessage } from './apiClient';
 import { invalidateProgress } from './api/progressApi';
+import { invalidateCourse } from './api/courseApi';
 
 export const requestCode = async (email) => {
   try {
@@ -35,8 +36,9 @@ export const isLoggedIn = () => apiClient.hasLiveToken();
 
 export const logout = () => {
   apiClient.clearToken();
-  // Прогресс хранится в БД — локально сбрасываем только кеш
+  // Прогресс и курс хранятся в БД — локально сбрасываем только кеши
   invalidateProgress();
+  invalidateCourse();
 };
 
 /** Токен протух/отозван — чистим сессию и уводим на логин */

@@ -5,7 +5,7 @@ import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ProgressRing from '../shared/ProgressRing';
 import { getAuth, logout } from '../../auth';
-import { fetchCourse } from '../../api/courseApi';
+import { fetchCourse, invalidateCourse } from '../../api/courseApi';
 import styles from './Home.module.css';
 
 const PersonIcon = () => (
@@ -84,12 +84,23 @@ const Home = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [accountOpen, setAccountOpen] = useState(false);
+  const [imageRetried, setImageRetried] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const accountRef = useRef(null);
 
   useEffect(() => {
     fetchCourse().then(setData).catch((e) => setError(e.message));
   }, []);
+
+  /* Кэш главной живёт сутки, а подписанные ссылки на картинки — час.
+     Картинка не открылась → ссылка протухла: сбрасываем кэш и берём свежие.
+     Одна попытка, иначе по-настоящему битая картинка зациклит запросы */
+  const handleImageError = () => {
+    if (imageRetried) return;
+    setImageRetried(true);
+    invalidateCourse();
+    fetchCourse().then(setData).catch(() => {});
+  };
 
   /** Сколько уроков модуля досмотрено — счётчик приходит с бэкенда */
   const doneInModule = (m) => m.lessonsDone;
@@ -178,7 +189,13 @@ const Home = () => {
                   <>
                     {m.image && (
                       <div className={styles.cardImageWrap}>
-                        <img className={styles.cardImage} src={m.image} alt="" loading="lazy" />
+                        <img
+                          className={styles.cardImage}
+                          src={m.image}
+                          alt=""
+                          loading="lazy"
+                          onError={handleImageError}
+                        />
                       </div>
                     )}
                     <div className={styles.cardHead}>
