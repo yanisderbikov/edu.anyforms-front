@@ -417,3 +417,28 @@
     flex-wrap: wrap;
   }
 }
+
+/* ── Медиа урока и модуля: превью + кнопка загрузки, без полей со ссылками ── */
+.mediaBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* Пропорции берём из ссылки: вертикальные видео не растягиваем на всю ширину */
+.videoPreview {
+  --preview-ar: 1.7778;
+  width: min(100%, calc(220px * var(--preview-ar)));
+  aspect-ratio: var(--preview-ar);
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.videoPreview :where(span, iframe) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

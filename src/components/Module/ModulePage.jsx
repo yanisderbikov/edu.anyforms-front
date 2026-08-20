@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import KinescopePlayer from '@kinescope/react-kinescope-player';
+import apiClient from '../../apiClient';
 import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
-import { fetchCourse } from '../../api/courseApi';
+import { fetchCourse, fetchVideoToken } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
+import { parseKinescope } from '../../shared/kinescope';
 import styles from './ModulePage.module.css';
 
 /* Стрелка «скачать» у материала урока */
@@ -36,11 +39,33 @@ const ModulePage = () => {
   const [completed, setCompleted] = useState(new Set());
   const [scroll, setScroll] = useState(0);
   const [achievement, setAchievement] = useState(false);
+  const [videoToken, setVideoToken] = useState(null);
+  const [videoTokenReady, setVideoTokenReady] = useState(false);
+  const [ratios, setRatios] = useState({}); // lessonId → реальные пропорции из плеера
 
   useEffect(() => {
     fetchCourse().then(setData).catch((e) => setError(e.message));
     fetchCompletedLessons().then(setCompleted);
   }, []);
+
+  /* Токен воспроизведения Kinescope: плеер отдаёт его Kinescope, а тот приходит
+     на наш бэкенд спросить, пускать ли этого зрителя (DRM-авторизация).
+     Плееры монтируем только после ответа, чтобы не пересоздавать их с токеном */
+  useEffect(() => {
+    if (!data) return;
+    const hasKinescope = data.modules.some((m) =>
+      m.lessons?.some((l) => parseKinescope(l.videoUrl))
+    );
+    if (!hasKinescope) {
+      setVideoTokenReady(true);
+      return;
+    }
+    fetchVideoToken()
+      .then(setVideoToken)
+      // Не получили — плеер пробует без токена (играет, пока авторизация не строгая)
+      .catch(() => {})
+      .finally(() => setVideoTokenReady(true));
+  }, [data]);
 
   // Скролл-прогресс страницы для полоски в шапке
   useEffect(() => {
@@ -54,6 +79,24 @@ const ModulePage = () => {
   }, [data]);
 
   const module = data?.modules.find((m) => m.id === moduleId);
+
+  /* Динамическая вотермарка Kinescope: поверх видео всплывает email студента,
+     чтобы запись экрана можно было отследить до конкретного аккаунта.
+     Позицию Kinescope задавать не даёт, поэтому делаем её незаметной иначе:
+     мелкий текст и редкие короткие показы вместо постоянного мельтешения.
+     Защита сохраняется — в любые полминуты записи email попадает. */
+  const watermark = useMemo(() => {
+    const email = apiClient.getJwtMetadata()?.email;
+    return email
+      ? {
+          text: email,
+          // Доля от размера плеера; у Kinescope по умолчанию 0.25
+          scale: 0.1,
+          // Виден 4 секунды, потом 26 секунд не показывается
+          displayTimeout: { visible: 4000, hidden: 26000 },
+        }
+      : undefined;
+  }, []);
 
   const doneCount = useMemo(
     () => (module ? module.lessons.filter((l) => completed.has(l.id)).length : 0),
@@ -111,6 +154,7 @@ const ModulePage = () => {
             <div className={styles.lessons}>
               {module.lessons.map((lesson, i) => {
                 const done = completed.has(lesson.id);
+                const kinescope = parseKinescope(lesson.videoUrl);
                 return (
                   <section key={lesson.id} className={styles.lesson}>
                     <div className={styles.lessonHead}>
@@ -121,15 +165,51 @@ const ModulePage = () => {
                       </span>
                       <h2 className="h3">{lesson.title}</h2>
                     </div>
-                    <video
-                      className={styles.video}
-                      src={lesson.videoUrl}
-                      poster={lesson.cover}
-                      controls
-                      preload="metadata"
-                      playsInline
-                      onEnded={() => handleEnded(lesson)}
-                    />
+                    {kinescope ? (
+                      (() => {
+                        // Пропорции: пока видео не загрузилось — из ссылки (#ratio)
+                        // или 16:9, дальше плеер сообщает реальные через SizeChanged
+                        const aspect = ratios[lesson.id] ?? kinescope.aspectRatio;
+                        return (
+                          <div
+                            className={styles.kinescope}
+                            style={{
+                              '--video-ar': aspect,
+                              '--video-maxh': aspect < 1 ? '62vh' : '46vh',
+                            }}
+                          >
+                            {videoTokenReady && (
+                              <KinescopePlayer
+                                videoId={kinescope.videoId}
+                                poster={lesson.cover || undefined}
+                                watermark={watermark}
+                                drmAuthToken={videoToken || undefined}
+                                onSizeChanged={({ width, height }) => {
+                                  if (!(width > 0 && height > 0)) return;
+                                  const ar = width / height;
+                                  setRatios((r) =>
+                                    Math.abs((r[lesson.id] ?? 0) - ar) < 0.01
+                                      ? r
+                                      : { ...r, [lesson.id]: ar }
+                                  );
+                                }}
+                                onEnded={() => handleEnded(lesson)}
+                              />
+                            )}
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <video
+                        className={styles.video}
+                        src={lesson.videoUrl}
+                        poster={lesson.cover}
+                        controls
+                        preload="metadata"
+                        playsInline
+                        onEnded={() => handleEnded(lesson)}
+                      />
+                    )}
                     <p className={styles.lessonDesc}>{lesson.description}</p>
 
                     {/* Скачиваемые материалы: ссылка подписана бэкендом,

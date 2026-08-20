@@ -57,6 +57,40 @@ export const deleteSlide = (id) => call(apiClient.instance.delete(`/api/admin/on
 export const presignUpload = (filename, contentType, prefix) =>
   call(apiClient.instance.post('/api/admin/presign-upload', { filename, contentType, prefix }));
 
+/* ── Kinescope: видео уроков ── */
+
+/** Бэкенд создаёт upload-ссылку Kinescope — их API-токен живёт только у него */
+export const createKinescopeUploadLink = (filename, filesize) =>
+  call(apiClient.instance.post('/api/admin/kinescope/upload-link', { filename, filesize }));
+
+/**
+ * Прямая загрузка видео в Kinescope по upload-ссылке, с прогрессом.
+ * Нарочно мимо apiClient: наш Bearer-заголовок Kinescope не нужен.
+ * Возвращает распарсенный ответ Kinescope (или null) — в нём id видео.
+ */
+export const uploadToKinescope = (endpoint, file, onProgress) =>
+  new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new Error(`Kinescope ответил ${xhr.status}`));
+        return;
+      }
+      try {
+        resolve(JSON.parse(xhr.responseText));
+      } catch {
+        resolve(null);
+      }
+    };
+    xhr.onerror = () => reject(new Error('Не удалось загрузить видео в Kinescope'));
+    xhr.send(file);
+  });
+
 /**
  * Прямая загрузка в S3 по подписанному URL, с прогрессом.
  * Нарочно мимо apiClient: Bearer-заголовок в запросе к S3 не нужен.

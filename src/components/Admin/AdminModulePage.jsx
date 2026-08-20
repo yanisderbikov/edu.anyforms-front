@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import KinescopePlayer from '@kinescope/react-kinescope-player';
 import SupportHint, { toastError } from '../shared/SupportHint';
-import AdminLayout, { DirectUploadButton } from './AdminLayout';
+import AdminLayout, { DirectUploadButton, KinescopeUploadButton } from './AdminLayout';
 import AutoTextarea from '../shared/AutoTextarea';
 import {
   getAdminCourse,
@@ -14,12 +15,15 @@ import {
   createLessonFile,
   deleteLessonFile,
 } from '../../api/adminApi';
+import { fetchVideoToken } from '../../api/courseApi';
 import { formatFileSize } from '../../shared/format';
+import { parseKinescope } from '../../shared/kinescope';
 import styles from './Admin.module.css';
 
 /* ── Урок: заголовок, видео, обложка, описание. Порядок — стрелками вверх/вниз.
      Пока есть несохранённые правки, строка подсвечена, «Сохранить» — яркая ── */
-const LessonRow = ({ lesson, index, count, onChanged }) => {
+const LessonRow = ({ lesson, index, count, onChanged, videoToken }) => {
+  const [ratio, setRatio] = useState(null); // реальные пропорции видео из плеера
   const [form, setForm] = useState({
     title: lesson.title ?? '',
     description: lesson.description ?? '',
@@ -29,6 +33,14 @@ const LessonRow = ({ lesson, index, count, onChanged }) => {
   const [busy, setBusy] = useState(false);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+  /* Превью: у Kinescope ссылка сама играбельная, у старых видео из бакета
+     подписанный URL приходит с бэка — он валиден, пока поле не трогали */
+  const kinescope = parseKinescope(form.videoUrl);
+  const legacyVideo =
+    !kinescope && form.videoUrl && form.videoUrl === (lesson.videoKey ?? '')
+      ? lesson.videoUrl
+      : null;
 
   // Есть ли отличия от сохранённого на бэке
   const dirty =
@@ -133,34 +145,51 @@ const LessonRow = ({ lesson, index, count, onChanged }) => {
         />
       </div>
 
-      <div className={styles.row}>
-        <input
-          className="input"
-          placeholder="Видео: ссылка или ключ в бакете"
-          value={form.videoUrl}
-          onChange={set('videoUrl')}
-        />
-        <DirectUploadButton
-          prefix="videos"
-          label="Загрузить видео"
-          onUploaded={(key) => setForm((f) => ({ ...f, videoUrl: key }))}
+      <div className={styles.mediaBlock}>
+        <span className={styles.filesCaption}>Видео урока</span>
+        {kinescope ? (
+          <div
+            className={styles.videoPreview}
+            style={{ '--preview-ar': ratio ?? kinescope.aspectRatio }}
+          >
+            <KinescopePlayer
+              key={kinescope.videoId}
+              videoId={kinescope.videoId}
+              drmAuthToken={videoToken || undefined}
+              onSizeChanged={({ width, height }) => {
+                if (width > 0 && height > 0) setRatio(width / height);
+              }}
+            />
+          </div>
+        ) : legacyVideo ? (
+          /* Старое видео из бакета: играет, пока его не заменили на Kinescope */
+          <video className={styles.videoPreview} src={legacyVideo} controls preload="metadata" />
+        ) : (
+          <p className={styles.hint}>
+            {form.videoUrl
+              ? 'Видео загружено — превью появится после сохранения'
+              : 'Видео пока нет'}
+          </p>
+        )}
+        <KinescopeUploadButton
+          label={form.videoUrl ? 'Заменить видео' : 'Загрузить видео'}
+          onUploaded={(embedUrl) => setForm((f) => ({ ...f, videoUrl: embedUrl }))}
         />
       </div>
 
-      <div className={styles.row}>
-        <input
-          className="input"
-          placeholder="Обложка 16:9 — ссылка или ключ в бакете"
-          value={form.coverUrl}
-          onChange={set('coverUrl')}
-        />
+      <div className={styles.mediaBlock}>
+        <span className={styles.filesCaption}>Обложка 16:9 — превью до запуска</span>
+        {lesson.cover ? (
+          <img className={styles.preview} src={lesson.cover} alt="" />
+        ) : (
+          <p className={styles.hint}>Обложки пока нет</p>
+        )}
         <DirectUploadButton
           prefix="lessons"
-          label="Загрузить обложку"
+          label={form.coverUrl ? 'Заменить обложку' : 'Загрузить обложку'}
           onUploaded={(key) => setForm((f) => ({ ...f, coverUrl: key }))}
         />
       </div>
-      {lesson.cover && <img className={styles.preview} src={lesson.cover} alt="" />}
 
       <AutoTextarea
         className={`input ${styles.textarea}`}
@@ -223,6 +252,7 @@ const AdminModulePage = () => {
   const [error, setError] = useState('');
   const [form, setForm] = useState(null);
   const [creatingLesson, setCreatingLesson] = useState(false);
+  const [videoToken, setVideoToken] = useState(null);
 
   const load = useCallback(() => {
     getAdminCourse()
@@ -248,6 +278,13 @@ const AdminModulePage = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Без токена превью не заиграет, когда у Kinescope включена строгая авторизация
+  useEffect(() => {
+    fetchVideoToken()
+      .then(setVideoToken)
+      .catch(() => {});
+  }, []);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -341,20 +378,19 @@ const AdminModulePage = () => {
               value={form.description}
               onChange={set('description')}
             />
-            <div className={styles.row}>
-              <input
-                className="input"
-                placeholder="Картинка карточки 16:9 — ссылка или ключ в бакете"
-                value={form.imageUrl}
-                onChange={set('imageUrl')}
-              />
+            <div className={styles.mediaBlock}>
+              <span className={styles.filesCaption}>Картинка карточки 16:9</span>
+              {module.image ? (
+                <img className={styles.preview} src={module.image} alt="" />
+              ) : (
+                <p className={styles.hint}>Картинки пока нет</p>
+              )}
               <DirectUploadButton
                 prefix="modules"
-                label="Загрузить фото"
+                label={form.imageUrl ? 'Заменить фото' : 'Загрузить фото'}
                 onUploaded={(key) => setForm((f) => ({ ...f, imageUrl: key }))}
               />
             </div>
-            {module.image && <img className={styles.preview} src={module.image} alt="" />}
             <label className={styles.dateLabel}>
               Дата открытия (пусто = открыт сразу)
               <input
@@ -392,6 +428,7 @@ const AdminModulePage = () => {
                 index={i}
                 count={module.lessons.length}
                 onChanged={load}
+                videoToken={videoToken}
               />
             ))}
             <button
