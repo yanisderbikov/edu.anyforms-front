@@ -2,12 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Header.module.css';
 
-/* Шапка с логотипом anyforms; справа — произвольные иконки (ЛК, выход).
+/* Шапка с логотипом anyforms; слева и справа — произвольные слоты
+   (бургер админки, иконки ЛК, выход).
    progress: { scroll: 0..100, done, total } — трекинг внутри модуля:
    тонкая полоска-прогресс по низу шапки + счётчик пройденных уроков. */
-const Header = ({ right = null, progress = null }) => (
+const Header = ({ left = null, right = null, progress = null }) => (
   <header className={`${styles.header} ${progress ? styles.hasProgress : ''}`}>
     <div className={styles.inner}>
+      {left && <div className={styles.left}>{left}</div>}
       {progress && (
         <span
           className={`${styles.lessonsChip} ${

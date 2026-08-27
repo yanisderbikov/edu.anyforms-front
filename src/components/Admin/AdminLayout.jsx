@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Navigate, NavLink } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Navigate, NavLink, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import SupportHint, { toastError } from '../shared/SupportHint';
 import Header from '../shared/Header/Header';
@@ -12,31 +12,94 @@ import {
 } from '../../api/adminApi';
 import styles from './Admin.module.css';
 
-/** Каркас админки: шапка, вкладки разделов, защита по роли */
+/* Меню сайдбара: группы с подпунктами — как в админке anyforms-front */
+const MENU = [
+  {
+    title: 'обучение',
+    items: [
+      { to: '/admin/course', label: 'Курс' },
+      { to: '/admin/onboarding', label: 'Онбординг' },
+    ],
+  },
+  {
+    title: 'доступы',
+    items: [{ to: '/admin/accounts', label: 'Аккаунты' }],
+  },
+];
+
+/** Каркас админки: шапка, сайдбар с разделами (на мобиле — бургер), защита по роли */
 const AdminLayout = ({ children }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Перешли на другую страницу — мобильное меню закрываем
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  // Пока открыт мобильный drawer, фон не скроллим
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
+
   // Не админ — молча уводим на главную, как и при 403 от API (см. apiClient).
   // Гостя с главной дальше отправит RequireAuth — на логин.
   if (!isAdmin()) {
     return <Navigate to="/" replace />;
   }
 
-  const tabClass = ({ isActive }) =>
-    `${styles.tab} ${isActive ? styles.tabActive : ''}`;
+  // Без end: «Курс» остаётся активным и внутри модуля (/admin/course/:id)
+  const linkClass = ({ isActive }) =>
+    `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`;
+
+  const nav = (
+    <nav className={styles.nav}>
+      {MENU.map((section) => (
+        <div key={section.title} className={styles.navSection}>
+          <p className={styles.navTitle}>{section.title}</p>
+          {section.items.map((item) => (
+            <NavLink key={item.to} to={item.to} className={linkClass}>
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+      ))}
+    </nav>
+  );
+
+  const burger = (
+    <button
+      type="button"
+      className={styles.burger}
+      aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
+      aria-expanded={menuOpen}
+      onClick={() => setMenuOpen((prev) => !prev)}
+    >
+      <span className={`${styles.burgerLine} ${menuOpen ? styles.burgerLineTop : ''}`} />
+      <span className={`${styles.burgerLine} ${menuOpen ? styles.burgerLineHidden : ''}`} />
+      <span className={`${styles.burgerLine} ${menuOpen ? styles.burgerLineBottom : ''}`} />
+    </button>
+  );
 
   return (
     <div className={styles.page}>
-      <Header />
-      <main className={styles.main}>
-        <nav className={styles.tabs}>
-          <NavLink to="/admin/course" className={tabClass}>
-            Курс
-          </NavLink>
-          <NavLink to="/admin/onboarding" className={tabClass}>
-            Онбординг
-          </NavLink>
-        </nav>
-        {children}
-      </main>
+      <Header left={burger} />
+
+      <aside className={styles.sidebar}>{nav}</aside>
+
+      {menuOpen && (
+        <>
+          <div className={styles.backdrop} onClick={() => setMenuOpen(false)} />
+          <aside className={styles.drawer}>{nav}</aside>
+        </>
+      )}
+
+      <div className={styles.content}>
+        <main className={styles.main}>{children}</main>
+      </div>
     </div>
   );
 };

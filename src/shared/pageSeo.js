@@ -38,7 +38,7 @@ export const PAGE_SEO = {
   },
   '/admin': {
     title: 'Админка — обучение anyforms',
-    description: 'Управление курсом и онбордингом платформы обучения anyforms.',
+    description: 'Управление курсом, онбордингом и доступами платформы обучения anyforms.',
   },
 };
 

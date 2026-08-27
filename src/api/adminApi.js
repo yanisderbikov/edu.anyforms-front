@@ -51,6 +51,27 @@ export const updateSlide = (id, data) =>
 
 export const deleteSlide = (id) => call(apiClient.instance.delete(`/api/admin/onboarding/slides/${id}`));
 
+/* ── Аккаунты: доступы клиентов к курсу ── */
+
+/** Пустой search — весь список; иначе поиск по части email */
+export const getStudents = (search) =>
+  call(apiClient.instance.get('/api/admin/students', { params: search ? { search } : {} }));
+
+export const createStudent = (email) =>
+  call(apiClient.instance.post('/api/admin/students', { email }));
+
+/** Отключённого не реактивирует даже покупка — вернуть можно только здесь */
+export const setStudentActive = (id, active) =>
+  call(apiClient.instance.patch(`/api/admin/students/${id}/active`, { active }));
+
+/** ADMIN — доступ в админку, STUDENT — забрать его. Себе роль менять нельзя */
+export const setStudentRole = (id, role) =>
+  call(apiClient.instance.patch(`/api/admin/students/${id}/role`, { role }));
+
+/** SELF — общий формат, PERSONAL — персональный. У купивших перезапишется из anyforms при входе */
+export const setStudentPlan = (id, plan) =>
+  call(apiClient.instance.patch(`/api/admin/students/${id}/plan`, { plan }));
+
 /* ── Загрузка файлов ── */
 
 /** Просим бэкенд подписать URL — сам файл через бэкенд не проходит */

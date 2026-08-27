@@ -41,6 +41,17 @@
   gap: 10px;
 }
 
+/* Левый слот (бургер админки) — на месте чипа прогресса */
+.left {
+  position: absolute;
+  left: var(--edge);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* ── Трекинг прогресса в модуле ── */
 
 /* Чип «Пройдено 2 / 3» слева в шапке */

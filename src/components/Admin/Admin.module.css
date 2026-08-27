@@ -3,6 +3,11 @@
   padding-top: var(--header-h);
 }
 
+/* Контент правее фиксированного сайдбара; на мобиле сайдбар прячется */
+.content {
+  padding-left: var(--admin-sidebar-w, 220px);
+}
+
 .main {
   width: 100%;
   max-width: 880px;
@@ -23,32 +28,134 @@
   color: var(--danger);
 }
 
-/* Вкладки разделов админки */
-.tabs {
-  display: flex;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  padding: 5px;
+/* ── Сайдбар админки (как в anyforms-front) ── */
+.sidebar {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  bottom: 0;
+  width: var(--admin-sidebar-w, 220px);
+  padding: 30px 14px 24px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
 }
 
-.tab {
-  text-decoration: none;
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navTitle {
+  margin: 0 0 8px 12px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
   color: var(--text-faint);
+}
+
+.navLink {
+  text-decoration: none;
+  color: var(--text-dim);
   font-weight: 600;
   font-size: 14px;
-  padding: 10px 20px;
+  padding: 9px 12px;
   border-radius: 10px;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.tab:hover {
+.navLink:hover {
   color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.tabActive {
+.navLinkActive {
   background: var(--accent);
   color: var(--white);
+}
+
+.navLinkActive:hover {
+  background: var(--accent);
+  color: var(--white);
+}
+
+/* ── Бургер в шапке и мобильный drawer ── */
+.burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 9px;
+  /* линии бургера — ровно по краю контента, не по краю кнопки */
+  margin-left: -9px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.burgerLine {
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.burgerLineTop {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.burgerLineHidden {
+  opacity: 0;
+}
+
+.burgerLineBottom {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.backdrop {
+  position: fixed;
+  inset: var(--header-h) 0 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 40;
+}
+
+.drawer {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  bottom: 0;
+  width: min(260px, 80vw);
+  padding: 26px 14px 24px;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  box-shadow: 12px 0 40px rgba(0, 0, 0, 0.45);
+  overflow-y: auto;
+  z-index: 41;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+
+  .content {
+    padding-left: 0;
+  }
+
+  .burger {
+    display: flex;
+  }
 }
 
 .head {
@@ -441,4 +548,104 @@
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+/* ── Аккаунты на /admin/accounts ── */
+.accountList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.accountRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 12px 12px 12px 18px;
+}
+
+.accountEmail {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.accountInactive .accountEmail {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+.accountPlan {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+/* Селекты прав и формата с подписью сверху */
+.accountField {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.accountCaption {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-left: 2px;
+}
+
+.accountSelect {
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  color: var(--text);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 8px;
+  cursor: pointer;
+  color-scheme: dark;
+  transition: border-color 0.15s ease;
+}
+
+.accountSelect:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.accountSelect:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.accountOff {
+  color: var(--danger);
+  border-color: rgba(224, 92, 92, 0.5);
+}
+
+@media (max-width: 640px) {
+  .accountRow {
+    flex-wrap: wrap;
+  }
+
+  .accountEmail {
+    flex-basis: 100%;
+  }
 }
