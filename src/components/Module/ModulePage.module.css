@@ -11,6 +11,21 @@
   padding: 56px var(--edge) 22vh;
 }
 
+/* Обложка модуля: баннер во всю ширину экрана, чуть больше 1/5 его высоты */
+.hero {
+  width: 100%;
+  height: 22vh;
+  min-height: 154px;
+  background: var(--panel);
+}
+
+.heroImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .backLink {
   display: inline-block;
   text-decoration: none;

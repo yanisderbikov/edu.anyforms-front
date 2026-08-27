@@ -309,6 +309,40 @@
   aspect-ratio: 16 / 10;
 }
 
+/* Медиа модуля, сгруппировано по месту показа: главная / страница модуля */
+.mediaGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.mediaGroupHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mediaGroupTitle {
+  font-weight: 700;
+  font-size: var(--fs-small);
+  color: var(--text);
+}
+
+/* Обложка модуля: широкий баннер, кроп примерно как на странице модуля */
+.coverPreview {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 12px;
+  object-fit: cover;
+  aspect-ratio: 4 / 1;
+}
+
 .row {
   display: flex;
   gap: 10px;

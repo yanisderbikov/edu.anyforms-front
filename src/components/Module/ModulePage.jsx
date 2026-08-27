@@ -5,7 +5,7 @@ import apiClient from '../../apiClient';
 import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
-import { fetchModule, fetchVideoToken } from '../../api/courseApi';
+import { fetchModule, fetchVideoToken, invalidateCourse } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
 import { parseKinescope } from '../../shared/kinescope';
@@ -75,6 +75,8 @@ const ModulePage = () => {
   const [videoToken, setVideoToken] = useState(null);
   const [videoTokenReady, setVideoTokenReady] = useState(false);
   const [ratios, setRatios] = useState({}); // lessonId → реальные пропорции из плеера
+  const [moduleRatio, setModuleRatio] = useState(null); // пропорции видео модуля
+  const retriedCover = useRef(false); // обложку по битой ссылке перезапрашиваем один раз
   /* lessonId → { duration, last, total }: сколько ролика реально просмотрено.
      В ref, а не в state — события времени идут часто, ререндеры тут не нужны */
   const watched = useRef({});
@@ -92,7 +94,8 @@ const ModulePage = () => {
      Плееры монтируем только после ответа, чтобы не пересоздавать их с токеном */
   useEffect(() => {
     if (!module) return;
-    const hasKinescope = module.lessons?.some((l) => parseKinescope(l.videoUrl));
+    const hasKinescope =
+      parseKinescope(module.videoUrl) || module.lessons?.some((l) => parseKinescope(l.videoUrl));
     if (!hasKinescope) {
       setVideoTokenReady(true);
       return;
@@ -132,6 +135,15 @@ const ModulePage = () => {
         }
       : undefined;
   }, []);
+
+  /* Подписанная ссылка на обложку живёт час — если протухла в кэше,
+     сбрасываем кэш и перезапрашиваем модуль один раз */
+  const handleCoverError = () => {
+    if (retriedCover.current) return;
+    retriedCover.current = true;
+    invalidateCourse();
+    fetchModule(moduleId).then(setModule).catch(() => {});
+  };
 
   const doneCount = useMemo(
     () => (module ? module.lessons.filter((l) => completed.has(l.id)).length : 0),
@@ -183,6 +195,18 @@ const ModulePage = () => {
         }
       />
 
+      {/* Обложка модуля: баннер во всю ширину экрана, ~1/5 высоты */}
+      {module && module.status === 'open' && module.cover && (
+        <div className={styles.hero}>
+          <img
+            className={styles.heroImg}
+            src={module.cover}
+            alt=""
+            onError={handleCoverError}
+          />
+        </div>
+      )}
+
       <main className={styles.main}>
         <Link to="/" className={styles.backLink}>
           ← Все модули
@@ -206,6 +230,50 @@ const ModulePage = () => {
               <h1 className="h2">
                 <span className="hAccent">{module.title}</span>
               </h1>
+
+              {/* Вводное видео модуля: между заголовком и описанием.
+                  Прогресс по нему не считаем — это не урок */}
+              {(() => {
+                const kinescope = parseKinescope(module.videoUrl);
+                if (kinescope) {
+                  const aspect = moduleRatio ?? kinescope.aspectRatio;
+                  return (
+                    <div
+                      className={styles.kinescope}
+                      style={{
+                        '--video-ar': aspect,
+                        '--video-maxh': aspect < 1 ? '62vh' : '46vh',
+                      }}
+                    >
+                      {videoTokenReady && (
+                        <KinescopePlayer
+                          videoId={kinescope.videoId}
+                          poster={module.videoCover || undefined}
+                          watermark={watermark}
+                          drmAuthToken={videoToken || undefined}
+                          onSizeChanged={({ width, height }) => {
+                            if (width > 0 && height > 0) setModuleRatio(width / height);
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                }
+                if (module.videoUrl) {
+                  return (
+                    <video
+                      className={styles.video}
+                      src={module.videoUrl}
+                      poster={module.videoCover || undefined}
+                      controls
+                      preload="metadata"
+                      playsInline
+                    />
+                  );
+                }
+                return null;
+              })()}
+
               <p className="lead multiline">{module.description}</p>
             </div>
 

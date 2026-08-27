@@ -31,6 +31,18 @@ const LessonRow = ({ lesson, index, count, onChanged, videoToken }) => {
     coverUrl: lesson.coverKey ?? '',
   });
   const [busy, setBusy] = useState(false);
+  // Локальное превью только что загруженной обложки — видно ещё до сохранения
+  const [coverPreview, setCoverPreview] = useState(null);
+
+  const showCoverPreview = (file) =>
+    setCoverPreview((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return URL.createObjectURL(file);
+    });
+
+  /* Что показывать: свежезагруженный файл; иначе, пока ключ в поле не менялся,
+     подписанную ссылку с бэка; пустое поле — обложки нет */
+  const coverSrc = coverPreview ?? (form.coverUrl ? lesson.cover : null);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -179,15 +191,18 @@ const LessonRow = ({ lesson, index, count, onChanged, videoToken }) => {
 
       <div className={styles.mediaBlock}>
         <span className={styles.filesCaption}>Обложка 16:9 — превью до запуска</span>
-        {lesson.cover ? (
-          <img className={styles.preview} src={lesson.cover} alt="" />
+        {coverSrc ? (
+          <img className={styles.preview} src={coverSrc} alt="" />
         ) : (
           <p className={styles.hint}>Обложки пока нет</p>
         )}
         <DirectUploadButton
           prefix="lessons"
           label={form.coverUrl ? 'Заменить обложку' : 'Загрузить обложку'}
-          onUploaded={(key) => setForm((f) => ({ ...f, coverUrl: key }))}
+          onUploaded={(key, file) => {
+            showCoverPreview(file);
+            setForm((f) => ({ ...f, coverUrl: key }));
+          }}
         />
       </div>
 
@@ -253,6 +268,15 @@ const AdminModulePage = () => {
   const [form, setForm] = useState(null);
   const [creatingLesson, setCreatingLesson] = useState(false);
   const [videoToken, setVideoToken] = useState(null);
+  const [moduleRatio, setModuleRatio] = useState(null); // пропорции видео модуля из плеера
+  // Локальные превью только что загруженных картинок — видны ещё до сохранения
+  const [previews, setPreviews] = useState({ image: null, cover: null, videoCover: null });
+
+  const showPreview = (field, file) =>
+    setPreviews((p) => {
+      if (p[field]) URL.revokeObjectURL(p[field]);
+      return { ...p, [field]: URL.createObjectURL(file) };
+    });
 
   const load = useCallback(() => {
     getAdminCourse()
@@ -268,6 +292,9 @@ const AdminModulePage = () => {
           title: found.title,
           description: found.description ?? '',
           imageUrl: found.imageKey ?? '',
+          coverUrl: found.coverKey ?? '',
+          videoUrl: found.videoKey ?? '',
+          videoCoverUrl: found.videoCoverKey ?? '',
           opensAt: found.opensAt ?? '',
         });
         setError('');
@@ -287,6 +314,19 @@ const AdminModulePage = () => {
   }, []);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+  // Есть ли отличия от сохранённого на бэке — как у уроков
+  const dirty =
+    !!form &&
+    !!module &&
+    (Number(form.order) !== module.order ||
+      form.title !== (module.title ?? '') ||
+      form.description !== (module.description ?? '') ||
+      form.imageUrl !== (module.imageKey ?? '') ||
+      form.coverUrl !== (module.coverKey ?? '') ||
+      form.videoUrl !== (module.videoKey ?? '') ||
+      form.videoCoverUrl !== (module.videoCoverKey ?? '') ||
+      form.opensAt !== (module.opensAt ?? ''));
 
   // Урок создаётся сразу — дальше строку просто редактируют и сохраняют
   const addLesson = async () => {
@@ -326,6 +366,9 @@ const AdminModulePage = () => {
         title: form.title,
         description: form.description,
         imageUrl: form.imageUrl || null,
+        coverUrl: form.coverUrl || null,
+        videoUrl: form.videoUrl || null,
+        videoCoverUrl: form.videoCoverUrl || null,
         opensAt: form.opensAt || null,
       });
       toast.success('Модуль сохранён');
@@ -378,18 +421,181 @@ const AdminModulePage = () => {
               value={form.description}
               onChange={set('description')}
             />
-            <div className={styles.mediaBlock}>
-              <span className={styles.filesCaption}>Картинка карточки 16:9</span>
-              {module.image ? (
-                <img className={styles.preview} src={module.image} alt="" />
-              ) : (
-                <p className={styles.hint}>Картинки пока нет</p>
-              )}
-              <DirectUploadButton
-                prefix="modules"
-                label={form.imageUrl ? 'Заменить фото' : 'Загрузить фото'}
-                onUploaded={(key) => setForm((f) => ({ ...f, imageUrl: key }))}
-              />
+            {/* Медиа модуля, сгруппировано по месту показа */}
+            <div className={styles.mediaGroup}>
+              <div className={styles.mediaGroupHead}>
+                <span className={styles.mediaGroupTitle}>Главный экран курса</span>
+                <span className={styles.hint}>Картинка карточки модуля в списке модулей</span>
+              </div>
+              <div className={styles.mediaBlock}>
+                <span className={styles.filesCaption}>Превью карточки 16:9</span>
+                {(previews.image ?? (form.imageUrl ? module.image : null)) ? (
+                  <img
+                    className={styles.preview}
+                    src={previews.image ?? module.image}
+                    alt=""
+                  />
+                ) : (
+                  <p className={styles.hint}>Картинки пока нет</p>
+                )}
+                <DirectUploadButton
+                  prefix="modules"
+                  label={form.imageUrl ? 'Заменить фото' : 'Загрузить фото'}
+                  onUploaded={(key, file) => {
+                    showPreview('image', file);
+                    setForm((f) => ({ ...f, imageUrl: key }));
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.mediaGroup}>
+              <div className={styles.mediaGroupHead}>
+                <span className={styles.mediaGroupTitle}>Страница модуля</span>
+                <span className={styles.hint}>
+                  Сверху обложка-баннер во всю ширину, ниже — заголовок, видео и описание
+                </span>
+              </div>
+
+              <div className={styles.mediaBlock}>
+                <span className={styles.filesCaption}>Обложка — широкий баннер вверху</span>
+                {(previews.cover ?? (form.coverUrl ? module.cover : null)) ? (
+                  <img
+                    className={styles.coverPreview}
+                    src={previews.cover ?? module.cover}
+                    alt=""
+                  />
+                ) : (
+                  <p className={styles.hint}>Обложки пока нет</p>
+                )}
+                <div className={styles.row}>
+                  <DirectUploadButton
+                    prefix="modules"
+                    label={form.coverUrl ? 'Заменить обложку' : 'Загрузить обложку'}
+                    onUploaded={(key, file) => {
+                      showPreview('cover', file);
+                      setForm((f) => ({ ...f, coverUrl: key }));
+                    }}
+                  />
+                  {form.coverUrl && (
+                    <button
+                      type="button"
+                      className={`${styles.smallBtn} ${styles.danger}`}
+                      onClick={() => {
+                        setPreviews((p) => {
+                          if (p.cover) URL.revokeObjectURL(p.cover);
+                          return { ...p, cover: null };
+                        });
+                        setForm((f) => ({ ...f, coverUrl: '' }));
+                      }}
+                    >
+                      Убрать обложку
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.mediaBlock}>
+                <span className={styles.filesCaption}>Видео — между заголовком и описанием</span>
+                {(() => {
+                  const kinescope = parseKinescope(form.videoUrl);
+                  /* У старых видео из бакета играбельна только подписанная ссылка
+                     с бэка — она валидна, пока поле не трогали */
+                  const legacyVideo =
+                    !kinescope && form.videoUrl && form.videoUrl === (module.videoKey ?? '')
+                      ? module.videoUrl
+                      : null;
+                  if (kinescope) {
+                    return (
+                      <div
+                        className={styles.videoPreview}
+                        style={{ '--preview-ar': moduleRatio ?? kinescope.aspectRatio }}
+                      >
+                        <KinescopePlayer
+                          key={kinescope.videoId}
+                          videoId={kinescope.videoId}
+                          drmAuthToken={videoToken || undefined}
+                          onSizeChanged={({ width, height }) => {
+                            if (width > 0 && height > 0) setModuleRatio(width / height);
+                          }}
+                        />
+                      </div>
+                    );
+                  }
+                  if (legacyVideo) {
+                    return (
+                      <video
+                        className={styles.videoPreview}
+                        src={legacyVideo}
+                        controls
+                        preload="metadata"
+                      />
+                    );
+                  }
+                  return (
+                    <p className={styles.hint}>
+                      {form.videoUrl
+                        ? 'Видео загружено — превью появится после сохранения'
+                        : 'Видео пока нет'}
+                    </p>
+                  );
+                })()}
+                <div className={styles.row}>
+                  <KinescopeUploadButton
+                    label={form.videoUrl ? 'Заменить видео' : 'Загрузить видео'}
+                    onUploaded={(embedUrl) => setForm((f) => ({ ...f, videoUrl: embedUrl }))}
+                  />
+                  {form.videoUrl && (
+                    <button
+                      type="button"
+                      className={`${styles.smallBtn} ${styles.danger}`}
+                      onClick={() => setForm((f) => ({ ...f, videoUrl: '' }))}
+                    >
+                      Убрать видео
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.mediaBlock}>
+                <span className={styles.filesCaption}>
+                  Обложка видео 16:9 — постер до запуска
+                </span>
+                {(previews.videoCover ?? (form.videoCoverUrl ? module.videoCover : null)) ? (
+                  <img
+                    className={styles.preview}
+                    src={previews.videoCover ?? module.videoCover}
+                    alt=""
+                  />
+                ) : (
+                  <p className={styles.hint}>Обложки пока нет</p>
+                )}
+                <div className={styles.row}>
+                  <DirectUploadButton
+                    prefix="modules"
+                    label={form.videoCoverUrl ? 'Заменить обложку' : 'Загрузить обложку'}
+                    onUploaded={(key, file) => {
+                      showPreview('videoCover', file);
+                      setForm((f) => ({ ...f, videoCoverUrl: key }));
+                    }}
+                  />
+                  {form.videoCoverUrl && (
+                    <button
+                      type="button"
+                      className={`${styles.smallBtn} ${styles.danger}`}
+                      onClick={() => {
+                        setPreviews((p) => {
+                          if (p.videoCover) URL.revokeObjectURL(p.videoCover);
+                          return { ...p, videoCover: null };
+                        });
+                        setForm((f) => ({ ...f, videoCoverUrl: '' }));
+                      }}
+                    >
+                      Убрать обложку
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
             <label className={styles.dateLabel}>
               Дата открытия (пусто = открыт сразу)
@@ -401,7 +607,12 @@ const AdminModulePage = () => {
               />
             </label>
             <div className={styles.row}>
-              <button type="button" className="btn" onClick={saveModule}>
+              <button
+                type="button"
+                className={`${styles.smallBtn} ${dirty ? styles.saveDirty : styles.saveIdle}`}
+                disabled={!dirty}
+                onClick={saveModule}
+              >
                 Сохранить модуль
               </button>
               <button
