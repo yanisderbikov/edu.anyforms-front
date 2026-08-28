@@ -40,10 +40,16 @@ const LockIcon = () => (
   </svg>
 );
 
+// opensAt приходит московским временем «2026-09-01T14:00»; полночь = «в этот день»,
+// время не показываем
 const formatOpensAt = (iso) => {
   if (!iso) return 'Скоро откроется';
-  const date = new Date(`${iso}T00:00:00`);
-  return `Откроется ${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`;
+  const [day, time] = iso.split('T');
+  const dayText = new Date(`${day}T00:00:00`)
+    .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  return time && time !== '00:00'
+    ? `Откроется ${dayText} в ${time} (мск)`
+    : `Откроется ${dayText}`;
 };
 
 /* Призрак главной: та же сетка и те же карточки, только вместо содержимого —

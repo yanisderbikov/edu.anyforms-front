@@ -287,6 +287,7 @@ const AdminModulePage = () => {
           return;
         }
         setModule(found);
+        const [opensDate = '', opensTime = ''] = (found.opensAt ?? '').split('T');
         setForm({
           order: found.order,
           title: found.title,
@@ -295,7 +296,8 @@ const AdminModulePage = () => {
           coverUrl: found.coverKey ?? '',
           videoUrl: found.videoKey ?? '',
           videoCoverUrl: found.videoCoverKey ?? '',
-          opensAt: found.opensAt ?? '',
+          opensDate,
+          opensTime,
         });
         setError('');
       })
@@ -315,6 +317,10 @@ const AdminModulePage = () => {
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
+  // «2026-09-01» + «14:00» → «2026-09-01T14:00»: формат opensAt в API (московское
+  // время). Дата без времени = полночь, время без даты модуль не закрывает
+  const opensAt = form?.opensDate ? `${form.opensDate}T${form.opensTime || '00:00'}` : null;
+
   // Есть ли отличия от сохранённого на бэке — как у уроков
   const dirty =
     !!form &&
@@ -326,7 +332,7 @@ const AdminModulePage = () => {
       form.coverUrl !== (module.coverKey ?? '') ||
       form.videoUrl !== (module.videoKey ?? '') ||
       form.videoCoverUrl !== (module.videoCoverKey ?? '') ||
-      form.opensAt !== (module.opensAt ?? ''));
+      (opensAt ?? '') !== (module.opensAt ?? ''));
 
   // Урок создаётся сразу — дальше строку просто редактируют и сохраняют
   const addLesson = async () => {
@@ -369,7 +375,7 @@ const AdminModulePage = () => {
         coverUrl: form.coverUrl || null,
         videoUrl: form.videoUrl || null,
         videoCoverUrl: form.videoCoverUrl || null,
-        opensAt: form.opensAt || null,
+        opensAt,
       });
       toast.success('Модуль сохранён');
       load();
@@ -597,15 +603,26 @@ const AdminModulePage = () => {
                 </div>
               </div>
             </div>
-            <label className={styles.dateLabel}>
-              Дата открытия (пусто = открыт сразу)
-              <input
-                className={`input ${styles.dateInput}`}
-                type="date"
-                value={form.opensAt}
-                onChange={set('opensAt')}
-              />
-            </label>
+            <div className={styles.row}>
+              <label className={styles.dateLabel}>
+                Дата открытия (пусто = открыт сразу)
+                <input
+                  className={`input ${styles.dateInput}`}
+                  type="date"
+                  value={form.opensDate}
+                  onChange={set('opensDate')}
+                />
+              </label>
+              <label className={styles.dateLabel}>
+                Время открытия (МСК)
+                <input
+                  className={`input ${styles.timeInput}`}
+                  type="time"
+                  value={form.opensTime}
+                  onChange={set('opensTime')}
+                />
+              </label>
+            </div>
             <div className={styles.row}>
               <button
                 type="button"
