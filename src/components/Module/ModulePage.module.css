@@ -1,0 +1,342 @@
+.page {
+  min-height: 100vh;
+  padding-top: var(--header-h);
+}
+
+.main {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  /* Отступ от шапки и «выдох» внизу, чтобы был виден конец страницы */
+  padding: 56px var(--edge) 22vh;
+}
+
+/* Обложка модуля: баннер во всю ширину экрана, чуть больше 1/5 его высоты */
+.hero {
+  width: 100%;
+  height: 22vh;
+  min-height: 154px;
+  background: var(--panel);
+}
+
+.heroImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: posterIn 0.35s ease;
+}
+
+.backLink {
+  display: inline-block;
+  text-decoration: none;
+  color: var(--text-faint);
+  font-weight: 600;
+  font-size: var(--fs-small);
+  margin-bottom: 28px;
+}
+
+.backLink:hover {
+  color: var(--text);
+}
+
+.loading,
+.error {
+  color: var(--text-faint);
+  padding: 24px 0;
+}
+
+.error {
+  color: var(--danger);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.lessons {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.lesson {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  /* Уроки за пределами экрана браузер не раскладывает и не рисует,
+     пока к ним не доскроллили; вторая строка резервирует примерную
+     высоту, чтобы скроллбар не прыгал */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 560px;
+}
+
+.lessonHead {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.lessonNum {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 17px;
+  transition: background 0.3s ease;
+}
+
+/* Урок просмотрен полностью — номер превращается в галочку */
+.lessonNumDone {
+  background: #4caf7d;
+  animation: numPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes numPop {
+  0% {
+    transform: scale(0.5);
+  }
+  70% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.video {
+  /* Ограничиваем высоту, чтобы заголовок + видео + описание помещались
+     на один экран; ширина считается из высоты, пропорции сохраняются */
+  width: min(100%, calc(46vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: var(--radius);
+  outline: none;
+}
+
+/* Контейнер плеера Kinescope. Пропорции видео приходят из ссылки урока
+   (#ratio=… — padding-top из embed-кода), по умолчанию 16:9; высота
+   ограничена как у .video, вертикальным видео отдаём чуть больше */
+.kinescope {
+  --video-ar: 1.7778;
+  --video-maxh: 46vh;
+  aspect-ratio: var(--video-ar);
+  width: min(100%, calc(var(--video-maxh) * var(--video-ar)));
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Плеер создаёт span-плейсхолдер, IFrame API кладёт в него iframe —
+   оба должны растянуться на весь контейнер */
+.kinescope :where(span, iframe) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@keyframes posterIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.lessonDesc {
+  margin: 0;
+  font-size: var(--fs-lead);
+  line-height: 1.4;
+  color: var(--text-dim);
+  max-width: 64ch;
+  white-space: pre-line;
+}
+
+/* ── Материалы урока: скачиваемые файлы ── */
+.files {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.filesTitle {
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.fileLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 11px 18px 11px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--fs-small);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fileLink:hover {
+  background: var(--panel-hover);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.fileIcon {
+  flex: none;
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.fileName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileSize {
+  flex: none;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+/* ── Ачивка «модуль пройден» ── */
+.achievement {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  /* Без backdrop-filter: размытие на весь экран дорого для слабых GPU,
+     плотная подложка выглядит так же */
+  background: rgba(10, 10, 10, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--edge);
+  overflow: hidden;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.achievementCard {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 44px 36px;
+  max-width: 520px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: cardIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cardIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.achievementBadge {
+  font-size: 56px;
+  line-height: 1;
+  animation: badgeBounce 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+
+@keyframes badgeBounce {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-18deg);
+  }
+  60% {
+    transform: scale(1.25) rotate(8deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.achievementTitle {
+  margin: 0;
+}
+
+.achievementActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.achievementActions :global(.btn) {
+  padding: 15px 28px;
+}
+
+/* Конфетти */
+.confetti {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation-name: confettiFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-5vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) rotate(540deg);
+    opacity: 0.6;
+  }
+}
+
+/* ── Скелетоны загрузки: повторяют номер урока и место под видео ── */
+.skNum {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.skVideo {
+  width: min(100%, calc(46vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius);
+}

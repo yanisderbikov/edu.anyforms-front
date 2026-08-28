@@ -1,0 +1,109 @@
+.page {
+  min-height: 100vh;
+  padding-top: var(--header-h);
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 40px var(--edge) 64px;
+}
+
+.grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+/* Статичное фото формы (не видео — оно отвлекало от входа) */
+.heroImage {
+  width: 100%;
+  aspect-ratio: 16 / 12;
+  object-fit: cover;
+  background: var(--panel);
+  border-radius: var(--radius);
+}
+
+.formCol {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.title {
+  margin-top: 4px;
+}
+
+.form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+}
+
+.codeInput {
+  letter-spacing: 8px;
+  font-size: 22px;
+  text-align: center;
+}
+
+.error {
+  color: var(--danger);
+  font-size: var(--fs-small);
+}
+
+/* Инфо-сообщение (не ошибка): «код уже отправляли», «отправили новый код» */
+.notice {
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.formLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+
+.backLink {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  padding: 4px 0;
+}
+
+.backLink:hover {
+  color: var(--text);
+}
+
+.backLink:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.backLink:disabled:hover {
+  color: var(--text-faint);
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+  }
+
+  .heroImage {
+    order: -1;
+  }
+}

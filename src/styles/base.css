@@ -1,0 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;1,600&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════
+   БАЗОВЫЙ ФАЙЛ ДИЗАЙНА
+   Меняем значения здесь — дизайн меняется во всём проекте.
+   Палитра и типографика взяты со страницы /course anyforms-front.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Цвета ── */
+  --bg: #151515;                       /* фон страницы */
+  --panel: #222222;                    /* карточки, панели */
+  --panel-hover: #282828;
+  --accent: #6c86bd;                   /* акцентный голубой */
+  --accent-hover: #5b76ae;
+  --white: #ffffff;
+  --text: var(--white);
+  --text-dim: rgba(255, 255, 255, 0.72);   /* вторичный текст */
+  --text-faint: rgba(255, 255, 255, 0.5);  /* подписи, eyebrow */
+  --border: rgba(255, 255, 255, 0.08);     /* линии-разделители */
+  --danger: #e05c5c;
+
+  /* ── Типографика ── */
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --fs-h1: clamp(34px, 7vw, 64px);     /* огромный заголовок (онбординг) */
+  --fs-h2: clamp(30px, 5.6vw, 52px);   /* заголовок секции */
+  --fs-h3: clamp(20px, 3vw, 24px);     /* заголовок карточки/урока */
+  --fs-lead: clamp(16px, 2.4vw, 19px); /* лид-абзац */
+  --fs-body: 15px;
+  --fs-small: 13px;
+
+  /* ── Геометрия ── */
+  --radius: 22px;                      /* скругление карточек */
+  --radius-btn: 16px;
+  --edge: 18px;                        /* отступ до края на мобильных */
+  --header-h: 78px;
+  --max-w: 1160px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-weight: 400;
+  font-size: var(--fs-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+/* ── Глобальные классы типографики ─────────────────────────── */
+
+/* Огромный заголовок «в лицо» */
+.h1 {
+  font-weight: 600;
+  font-size: var(--fs-h1);
+  line-height: 0.95;
+  letter-spacing: -1.5px;
+  margin: 0;
+}
+
+/* Заголовок секции */
+.h2 {
+  font-weight: 600;
+  font-size: var(--fs-h2);
+  line-height: 0.9;
+  letter-spacing: -1px;
+  margin: 0;
+}
+
+/* Заголовок карточки / урока */
+.h3 {
+  font-weight: 600;
+  font-size: var(--fs-h3);
+  letter-spacing: -0.4px;
+  line-height: 1;
+  margin: 0;
+}
+
+/* Акцентное слово в заголовке — Italic Semi Bold, голубой */
+.hAccent {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--accent);
+  padding-right: 0.05em;
+}
+
+/* Мелкая надпись капсом над заголовком */
+.eyebrow {
+  display: inline-block;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.eyebrowAccent {
+  color: var(--accent);
+}
+
+/* Лид-абзац под заголовком */
+.lead {
+  font-size: var(--fs-lead);
+  line-height: 1.35;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* Тексты из админки: переносы строк из textarea сохраняются */
+.multiline {
+  white-space: pre-line;
+}
+
+/* ── Кнопки ────────────────────────────────────────────────── */
+.btn {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 17px;
+  padding: 17px 52px;
+  border-radius: var(--radius-btn);
+  transition: background 0.15s ease, transform 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Стрелка в белом кружке справа на кнопке */
+.btnArrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Второстепенная кнопка-«призрак» */
+.btnGhost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--text);
+}
+
+.btnGhost:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ── Поля ввода ────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-btn);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  padding: 16px 18px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input::placeholder {
+  color: var(--text-faint);
+}
+
+.input:focus {
+  border-color: var(--accent);
+}
+
+/* ── Карточка ──────────────────────────────────────────────── */
+.card {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 28px 26px;
+}
+
+/* ── Контейнер страницы ────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 var(--edge);
+}

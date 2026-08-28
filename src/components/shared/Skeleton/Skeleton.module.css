@@ -1,0 +1,36 @@
+.skeleton {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  /* Чуть светлее панели, чтобы читалось и на карточке, и на фоне страницы */
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Блик пробегает слева направо — знак, что страница грузится, а не сломалась */
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.085),
+    transparent
+  );
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Кому анимация мешает — остаётся спокойная заливка */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}

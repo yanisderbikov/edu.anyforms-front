@@ -1,0 +1,312 @@
+.page {
+  min-height: 100vh;
+  padding-top: var(--header-h);
+}
+
+.main {
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  /* Отступ от шапки и «выдох» внизу */
+  padding: 56px var(--edge) 18vh;
+}
+
+.loading,
+.error {
+  color: var(--text-faint);
+  padding: 40px 0;
+}
+
+.error {
+  color: var(--danger);
+}
+
+/* Кольцо всегда напротив заголовка, и на мобилке тоже */
+.headRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 44px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+  min-width: 0;
+}
+
+/* Десктоп: крупное кольцо по центру блока заголовка */
+.headRow {
+  align-items: center;
+}
+
+/* Мобилка: компактное кольцо напротив строки заголовка */
+@media (max-width: 640px) {
+  .headRow {
+    align-items: flex-start;
+  }
+
+  .headRow > :last-child {
+    margin-top: 26px;
+  }
+}
+
+/* Кольцо в карточке модуля — прижато вправо */
+.cardRing {
+  margin-left: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+@media (min-width: 760px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 28px 26px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+a.card:hover {
+  background: var(--panel-hover);
+  transform: translateY(-3px);
+}
+
+.cardLocked {
+  opacity: 0.55;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.numLocked {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-faint);
+}
+
+/* Фото модуля 16:9 — во всю ширину карточки, поверх её паддингов */
+.cardImageWrap {
+  margin: -28px -26px 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cardImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+a.card:hover .cardImage {
+  transform: scale(1.04);
+}
+
+.cardLocked .cardImage {
+  filter: grayscale(0.65) brightness(0.8);
+}
+
+.cardDesc {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  color: var(--text-dim);
+  flex: 1;
+  white-space: pre-line;
+}
+
+.cardOpenNote {
+  font-weight: 600;
+  font-size: var(--fs-small);
+  color: var(--accent);
+}
+
+.cardLockNote {
+  font-weight: 600;
+  font-size: var(--fs-small);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ── Личный кабинет в шапке ── */
+.account {
+  position: relative;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.accountMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.accountEmail {
+  font-size: var(--fs-small);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logoutBtn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.logoutBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Поддержка справа снизу ── */
+.support {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.supportBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--white);
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.supportBtn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.supportMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.supportMenu a {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  padding: 9px 14px;
+  border-radius: 10px;
+}
+
+.supportMenu a:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Скелетоны загрузки: размеры повторяют реальные элементы карточки ── */
+.skImage {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.skNum {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+/* На месте кольца прогресса — круг того же размера */
+.skRing {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+}
+
+@media (max-width: 759px) {
+  .skRing {
+    width: 64px;
+    height: 64px;
+  }
+}
