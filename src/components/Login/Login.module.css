@@ -61,6 +61,18 @@
   font-size: var(--fs-small);
 }
 
+/* Инфо-сообщение (не ошибка): «код уже отправляли», «отправили новый код» */
+.notice {
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.formLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+
 .backLink {
   align-self: flex-start;
   background: none;
@@ -74,6 +86,15 @@
 
 .backLink:hover {
   color: var(--text);
+}
+
+.backLink:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.backLink:disabled:hover {
+  color: var(--text-faint);
 }
 
 @media (min-width: 900px) {

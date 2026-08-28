@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
@@ -28,13 +28,24 @@ const getGreeting = () => {
   return 'Доброй ночи';
 };
 
+/** Пауза между отправками кода — как RESEND_COOLDOWN на бэке */
+const RESEND_SECONDS = 30;
+
 const Login = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState('email'); // 'email' | 'code'
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [resendLeft, setResendLeft] = useState(0);
+
+  useEffect(() => {
+    if (resendLeft <= 0) return undefined;
+    const id = setInterval(() => setResendLeft((s) => s - 1), 1000);
+    return () => clearInterval(id);
+  }, [resendLeft > 0]);
 
   const submitEmail = async (e) => {
     e.preventDefault();
@@ -45,8 +56,28 @@ const Login = () => {
     setBusy(true);
     setError('');
     try {
-      await requestCode(email.trim());
+      const res = await requestCode(email.trim());
+      // Живой код уже есть (запрашивали недавно) — всё равно пускаем вводить
+      setNotice(res.alreadySent ? 'Код уже отправляли на эту почту — проверьте письмо.' : '');
+      setResendLeft(RESEND_SECONDS);
       setStep('code');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resendCode = async () => {
+    if (busy || resendLeft > 0) return;
+    setBusy(true);
+    setError('');
+    try {
+      const res = await requestCode(email.trim());
+      setNotice(res.alreadySent
+        ? 'Код уже отправляли — проверьте письмо.'
+        : 'Отправили новый код. Старый больше не подойдёт.');
+      setResendLeft(RESEND_SECONDS);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -140,6 +171,7 @@ const Login = () => {
                     onChange={(e) => setCode(e.target.value)}
                     autoFocus
                   />
+                  {notice && !error && <span className={styles.notice}>{notice}</span>}
                   {error && (
                     <span className={styles.error}>
                       <SupportHint>{error}</SupportHint>
@@ -151,17 +183,31 @@ const Login = () => {
                       <ArrowIcon />
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    className={styles.backLink}
-                    onClick={() => {
-                      setStep('email');
-                      setCode('');
-                      setError('');
-                    }}
-                  >
-                    ← Другой e-mail
-                  </button>
+                  <div className={styles.formLinks}>
+                    <button
+                      type="button"
+                      className={styles.backLink}
+                      onClick={resendCode}
+                      disabled={busy || resendLeft > 0}
+                    >
+                      {resendLeft > 0
+                        ? `Отправить код ещё раз (${resendLeft} с)`
+                        : 'Отправить код ещё раз'}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.backLink}
+                      onClick={() => {
+                        setStep('email');
+                        setCode('');
+                        setError('');
+                        setNotice('');
+                        setResendLeft(0);
+                      }}
+                    >
+                      ← Другой e-mail
+                    </button>
+                  </div>
                 </form>
               </>
             )}

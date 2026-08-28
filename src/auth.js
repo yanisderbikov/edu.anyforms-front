@@ -10,8 +10,13 @@ import { invalidateCourse } from './api/courseApi';
 export const requestCode = async (email) => {
   try {
     const res = await apiClient.instance.post('/api/auth/request-code', { email });
-    return res.data;
+    return { ...res.data, alreadySent: false };
   } catch (e) {
+    // 429 — живой код уже отправлен (кулдаун повторной отправки).
+    // Это не отказ во входе: письмо у пользователя есть, пускаем вводить код.
+    if (e?.response?.status === 429) {
+      return { alreadySent: true, message: apiErrorMessage(e) };
+    }
     throw new Error(apiErrorMessage(e));
   }
 };
