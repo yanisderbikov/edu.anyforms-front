@@ -145,15 +145,6 @@
   border: 0;
 }
 
-/* Постер-заглушка: стоит в контейнере видео, пока не смонтирован плеер */
-.posterImg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  animation: posterIn 0.35s ease;
-}
-
 @keyframes posterIn {
   from {
     opacity: 0;
