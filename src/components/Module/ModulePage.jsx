@@ -70,12 +70,16 @@ const ModulePage = () => {
   const [module, setModule] = useState(null);
   const [error, setError] = useState('');
   const [completed, setCompleted] = useState(new Set());
-  const [scroll, setScroll] = useState(0);
   const [achievement, setAchievement] = useState(false);
   const [videoToken, setVideoToken] = useState(null);
   const [videoTokenReady, setVideoTokenReady] = useState(false);
   const [ratios, setRatios] = useState({}); // lessonId → реальные пропорции из плеера
   const [moduleRatio, setModuleRatio] = useState(null); // пропорции видео модуля
+  const [loadedImages, setLoadedImages] = useState(new Set()); // урлы уже загруженных картинок
+  const [imagesDone, setImagesDone] = useState(false); // вся очередь картинок отработала
+  /* Сколько Kinescope-плееров уже загрузилось: плеер N+1 монтируется,
+     только когда плеер N сообщил onReady (или явно не смог) */
+  const [playersReady, setPlayersReady] = useState(0);
   const retriedCover = useRef(false); // обложку по битой ссылке перезапрашиваем один раз
   /* lessonId → { duration, last, total }: сколько ролика реально просмотрено.
      В ref, а не в state — события времени идут часто, ререндеры тут не нужны */
@@ -107,17 +111,6 @@ const ModulePage = () => {
       .finally(() => setVideoTokenReady(true));
   }, [module]);
 
-  // Скролл-прогресс страницы для полоски в шапке
-  useEffect(() => {
-    const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setScroll(max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 100);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [module]);
-
   /* Динамическая вотермарка Kinescope: поверх видео всплывает email студента,
      чтобы запись экрана можно было отследить до конкретного аккаунта.
      Позицию Kinescope задавать не даёт, поэтому делаем её незаметной иначе:
@@ -144,6 +137,77 @@ const ModulePage = () => {
     invalidateCourse();
     fetchModule(moduleId).then(setModule).catch(() => {});
   };
+
+  /* Картинки грузим строго по одной, сверху вниз: обложка модуля, постер
+     вводного видео, постеры уроков по порядку. На слабом интернете так
+     запросы не толкаются, и страница заполняется в порядке чтения.
+     Загруженная картинка попадает в кэш браузера — <img> с тем же урлом
+     ниже отрисуется мгновенно. Плееры ждут конца всей очереди (imagesDone). */
+  useEffect(() => {
+    setLoadedImages(new Set());
+    setImagesDone(false);
+    setPlayersReady(0);
+    if (!module || module.status !== 'open') return;
+    const urls = [
+      module.cover,
+      module.videoCover,
+      ...module.lessons.map((l) => l.cover),
+    ].filter(Boolean);
+    let cancelled = false;
+    (async () => {
+      for (const url of urls) {
+        const ok = await new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = url;
+        });
+        if (cancelled) return;
+        if (ok) {
+          setLoadedImages((prev) => new Set(prev).add(url));
+        } else {
+          // Битая ссылка (скорее всего протухла подпись) — один общий ретрай
+          // модуля; эффект перезапустится со свежими урлами
+          handleCoverError();
+        }
+      }
+      setImagesDone(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [module]);
+
+  /* Очередь Kinescope-плееров: сверху вниз, по одному. Слот — вводное видео
+     модуля ('intro') или id урока; следующий плеер монтируется, когда
+     предыдущий загрузился. Так iframe'ы не съедают канал одновременно,
+     а у каждого плеера остаётся родная кнопка запуска и preload="none" —
+     само видео не качается, пока студент не нажал Play. */
+  const kinescopeSlots = useMemo(() => {
+    if (!module || module.status !== 'open') return [];
+    const slots = [];
+    if (parseKinescope(module.videoUrl)) slots.push('intro');
+    module.lessons.forEach((l) => {
+      if (parseKinescope(l.videoUrl)) slots.push(l.id);
+    });
+    return slots;
+  }, [module]);
+
+  /* Слот монтируется, когда очередь дошла до него (после всех картинок) */
+  const canMountPlayer = (slot) =>
+    imagesDone && videoTokenReady && kinescopeSlots.indexOf(slot) <= playersReady;
+
+  const advancePlayerQueue = (slot) =>
+    setPlayersReady((p) => Math.max(p, kinescopeSlots.indexOf(slot) + 1));
+
+  /* Страховка: если очередной плеер молчит (ошибка, совсем плохая сеть),
+     через 10 секунд пускаем следующий — очередь не должна замирать навсегда */
+  useEffect(() => {
+    if (!imagesDone || playersReady >= kinescopeSlots.length) return;
+    const t = setTimeout(() => setPlayersReady((p) => p + 1), 10000);
+    return () => clearTimeout(t);
+  }, [imagesDone, playersReady, kinescopeSlots]);
 
   const doneCount = useMemo(
     () => (module ? module.lessons.filter((l) => completed.has(l.id)).length : 0),
@@ -190,20 +254,19 @@ const ModulePage = () => {
       <Header
         progress={
           module && module.status === 'open'
-            ? { scroll, done: doneCount, total: module.lessons.length }
+            ? { done: doneCount, total: module.lessons.length }
             : null
         }
       />
 
-      {/* Обложка модуля: баннер во всю ширину экрана, ~1/5 высоты */}
+      {/* Обложка модуля: баннер во всю ширину экрана, ~1/5 высоты.
+          Контейнер стоит сразу (вёрстка не прыгает), картинка появляется,
+          когда очередь загрузки до неё дошла */}
       {module && module.status === 'open' && module.cover && (
         <div className={styles.hero}>
-          <img
-            className={styles.heroImg}
-            src={module.cover}
-            alt=""
-            onError={handleCoverError}
-          />
+          {loadedImages.has(module.cover) && (
+            <img className={styles.heroImg} src={module.cover} alt="" decoding="async" />
+          )}
         </div>
       )}
 
@@ -232,9 +295,14 @@ const ModulePage = () => {
               </h1>
 
               {/* Вводное видео модуля: между заголовком и описанием.
-                  Прогресс по нему не считаем — это не урок */}
+                  Прогресс по нему не считаем — это не урок.
+                  Пока очередь плееров не дошла — в контейнере постер */}
               {(() => {
                 const kinescope = parseKinescope(module.videoUrl);
+                const poster =
+                  module.videoCover && loadedImages.has(module.videoCover)
+                    ? module.videoCover
+                    : null;
                 if (kinescope) {
                   const aspect = moduleRatio ?? kinescope.aspectRatio;
                   return (
@@ -245,30 +313,54 @@ const ModulePage = () => {
                         '--video-maxh': aspect < 1 ? '62vh' : '46vh',
                       }}
                     >
-                      {videoTokenReady && (
+                      {canMountPlayer('intro') ? (
                         <KinescopePlayer
                           videoId={kinescope.videoId}
                           poster={module.videoCover || undefined}
+                          preload="none"
                           watermark={watermark}
                           drmAuthToken={videoToken || undefined}
+                          onReady={() => advancePlayerQueue('intro')}
+                          onInitError={() => advancePlayerQueue('intro')}
+                          onJSLoadError={() => advancePlayerQueue('intro')}
                           onSizeChanged={({ width, height }) => {
                             if (width > 0 && height > 0) setModuleRatio(width / height);
                           }}
                         />
+                      ) : (
+                        poster && (
+                          <img
+                            className={styles.posterImg}
+                            src={poster}
+                            alt=""
+                            decoding="async"
+                          />
+                        )
                       )}
                     </div>
                   );
                 }
                 if (module.videoUrl) {
-                  return (
+                  return imagesDone ? (
                     <video
                       className={styles.video}
                       src={module.videoUrl}
                       poster={module.videoCover || undefined}
                       controls
-                      preload="metadata"
+                      preload="none"
                       playsInline
                     />
+                  ) : (
+                    <div className={styles.video}>
+                      {poster && (
+                        <img
+                          className={styles.posterImg}
+                          src={poster}
+                          alt=""
+                          decoding="async"
+                        />
+                      )}
+                    </div>
                   );
                 }
                 return null;
@@ -281,6 +373,11 @@ const ModulePage = () => {
               {module.lessons.map((lesson, i) => {
                 const done = completed.has(lesson.id);
                 const kinescope = parseKinescope(lesson.videoUrl);
+                const poster =
+                  lesson.cover && loadedImages.has(lesson.cover) ? lesson.cover : null;
+                const posterImg = poster && (
+                  <img className={styles.posterImg} src={poster} alt="" decoding="async" />
+                );
                 return (
                   <section key={lesson.id} className={styles.lesson}>
                     <div className={styles.lessonHead}>
@@ -304,12 +401,16 @@ const ModulePage = () => {
                               '--video-maxh': aspect < 1 ? '62vh' : '46vh',
                             }}
                           >
-                            {videoTokenReady && (
+                            {canMountPlayer(lesson.id) ? (
                               <KinescopePlayer
                                 videoId={kinescope.videoId}
                                 poster={lesson.cover || undefined}
+                                preload="none"
                                 watermark={watermark}
                                 drmAuthToken={videoToken || undefined}
+                                onReady={() => advancePlayerQueue(lesson.id)}
+                                onInitError={() => advancePlayerQueue(lesson.id)}
+                                onJSLoadError={() => advancePlayerQueue(lesson.id)}
                                 onSizeChanged={({ width, height }) => {
                                   if (!(width > 0 && height > 0)) return;
                                   const ar = width / height;
@@ -327,22 +428,26 @@ const ModulePage = () => {
                                 }
                                 onEnded={() => markWatched(lesson)}
                               />
+                            ) : (
+                              posterImg
                             )}
                           </div>
                         );
                       })()
-                    ) : (
+                    ) : imagesDone ? (
                       <video
                         className={styles.video}
                         src={lesson.videoUrl}
                         poster={lesson.cover}
                         controls
-                        preload="metadata"
+                        preload="none"
                         playsInline
                         onDurationChange={(e) => trackDuration(lesson, e.target.duration)}
                         onTimeUpdate={(e) => trackTime(lesson, e.target.currentTime)}
                         onEnded={() => markWatched(lesson)}
                       />
+                    ) : (
+                      <div className={styles.video}>{posterImg}</div>
                     )}
                     <p className={styles.lessonDesc}>{lesson.description}</p>
 

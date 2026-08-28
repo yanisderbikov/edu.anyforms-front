@@ -194,6 +194,7 @@ const Home = () => {
                           src={m.image}
                           alt=""
                           loading="lazy"
+                          decoding="async"
                           onError={handleImageError}
                         />
                       </div>
