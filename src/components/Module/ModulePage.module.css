@@ -129,6 +129,7 @@
 .kinescope {
   --video-ar: 1.7778;
   --video-maxh: 46vh;
+  position: relative;
   aspect-ratio: var(--video-ar);
   width: min(100%, calc(var(--video-maxh) * var(--video-ar)));
   background: #000;
@@ -143,6 +144,42 @@
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+/* Лоадер в контейнере: крутится, пока плеер слота не сообщил onReady.
+   Чисто CSS — сети не ест. Фона нет и клики проходят насквозь: если
+   постер уже виден под ним, он не перекрыт, а Play нажимается */
+.videoLoader {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.videoLoader::before {
+  content: '';
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--accent);
+  animation: videoSpin 0.9s linear infinite;
+}
+
+@keyframes videoSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Кому анимация мешает — спокойное кольцо без вращения */
+@media (prefers-reduced-motion: reduce) {
+  .videoLoader::before {
+    animation: none;
+  }
 }
 
 @keyframes posterIn {
