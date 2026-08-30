@@ -6,6 +6,7 @@ import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import RichText from '../shared/RichText';
+import ExpandableText from '../shared/ExpandableText';
 import { fetchModule, fetchVideoToken, invalidateCourse } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
@@ -330,9 +331,9 @@ const ModulePage = () => {
                 return null;
               })()}
 
-              <p className="lead multiline">
+              <ExpandableText key={moduleId} className="lead multiline">
                 <RichText text={module.description} />
-              </p>
+              </ExpandableText>
             </div>
 
             <div className={styles.lessons}>
@@ -410,9 +411,9 @@ const ModulePage = () => {
                         onEnded={() => markWatched(lesson)}
                       />
                     )}
-                    <p className={styles.lessonDesc}>
+                    <ExpandableText className={styles.lessonDesc}>
                       <RichText text={lesson.description} />
-                    </p>
+                    </ExpandableText>
 
                     {/* Скачиваемые материалы: ссылка подписана бэкендом,
                         браузер сохранит файл под исходным именем */}

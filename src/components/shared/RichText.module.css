@@ -4,6 +4,12 @@
   color: var(--text);
 }
 
+/* Наклонный — только наклон, насыщенность не меняем */
+.italic {
+  font-style: italic;
+  font-weight: inherit;
+}
+
 /* Ссылка — акцентный голубой */
 .link {
   color: var(--accent);

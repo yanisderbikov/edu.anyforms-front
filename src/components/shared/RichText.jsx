@@ -42,7 +42,7 @@ const RichText = ({ text, className = '', plainLinks = false }) => {
     if (m.index > last) nodes.push(text.slice(last, m.index));
 
     if (bold) nodes.push(<strong key={key++} className={styles.bold}>{bold}</strong>);
-    else if (italic) nodes.push(<em key={key++}>{italic}</em>);
+    else if (italic) nodes.push(<em key={key++} className={styles.italic}>{italic}</em>);
     else {
       nodes.push(
         plainLinks ? (
