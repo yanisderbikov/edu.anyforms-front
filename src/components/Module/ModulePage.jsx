@@ -5,6 +5,8 @@ import apiClient from '../../apiClient';
 import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
+import RichText from '../shared/RichText';
+import ExpandableText from '../shared/ExpandableText';
 import { fetchModule, fetchVideoToken, invalidateCourse } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
@@ -78,6 +80,9 @@ const ModulePage = () => {
   /* Сколько Kinescope-плееров уже загрузилось: плеер N+1 монтируется,
      только когда плеер N сообщил onReady (или явно не смог) */
   const [playersReady, setPlayersReady] = useState(0);
+  /* Слоты, чей плеер уже создан (onInit) или явно не смог: до этого в
+     контейнере крутится лоадер, чтобы не висел пустой чёрный квадрат */
+  const [settledSlots, setSettledSlots] = useState(() => new Set());
   const retriedCover = useRef(false); // обложку по битой ссылке перезапрашиваем один раз
   /* lessonId → { duration, last, total }: сколько ролика реально просмотрено.
      В ref, а не в state — события времени идут часто, ререндеры тут не нужны */
@@ -143,7 +148,10 @@ const ModulePage = () => {
      само видео не качается, пока студент не нажал Play. Постер каждого
      видео грузит сам плеер (один раз, у себя в iframe) — отдельной
      предзагрузки постеров нет. */
-  useEffect(() => setPlayersReady(0), [module]);
+  useEffect(() => {
+    setPlayersReady(0);
+    setSettledSlots(new Set());
+  }, [module]);
 
   const kinescopeSlots = useMemo(() => {
     if (!module || module.status !== 'open') return [];
@@ -161,6 +169,20 @@ const ModulePage = () => {
 
   const advancePlayerQueue = (slot) =>
     setPlayersReady((p) => Math.max(p, kinescopeSlots.indexOf(slot) + 1));
+
+  /* Лоадер прячем по onInit, а не по onReady: обёртка подписывается на
+     Ready уже после create, и на быстрой сети (кэш) событие проскакивает
+     до подписки — onReady тогда не приходит вовсе. onInit же — колбэк
+     самого create, он не теряется, и iframe в этот момент уже рисует
+     свой интерфейс. Страховочный таймер очереди лоадеры не трогает */
+  const hideLoader = (slot) =>
+    setSettledSlots((s) => (s.has(slot) ? s : new Set(s).add(slot)));
+
+  /* Плеер догрузился или явно не смог: очередь идёт дальше */
+  const settleSlot = (slot) => {
+    hideLoader(slot);
+    advancePlayerQueue(slot);
+  };
 
   /* Страховка: если очередной плеер молчит (ошибка, совсем плохая сеть),
      через 10 секунд пускаем следующий — очередь не должна замирать навсегда */
@@ -259,7 +281,7 @@ const ModulePage = () => {
 
               {/* Вводное видео модуля: между заголовком и описанием.
                   Прогресс по нему не считаем — это не урок.
-                  Пока очередь плееров не дошла — пустой тёмный контейнер */}
+                  Пока плеер не поднялся — тёмный контейнер с лоадером */}
               {(() => {
                 const kinescope = parseKinescope(module.videoUrl);
                 if (kinescope) {
@@ -272,6 +294,9 @@ const ModulePage = () => {
                         '--video-maxh': aspect < 1 ? '62vh' : '46vh',
                       }}
                     >
+                      {!settledSlots.has('intro') && (
+                        <div className={styles.videoLoader} aria-hidden="true" />
+                      )}
                       {canMountPlayer('intro') && (
                         <KinescopePlayer
                           videoId={kinescope.videoId}
@@ -279,9 +304,10 @@ const ModulePage = () => {
                           preload="none"
                           watermark={watermark}
                           drmAuthToken={videoToken || undefined}
-                          onReady={() => advancePlayerQueue('intro')}
-                          onInitError={() => advancePlayerQueue('intro')}
-                          onJSLoadError={() => advancePlayerQueue('intro')}
+                          onInit={() => hideLoader('intro')}
+                          onReady={() => settleSlot('intro')}
+                          onInitError={() => settleSlot('intro')}
+                          onJSLoadError={() => settleSlot('intro')}
                           onSizeChanged={({ width, height }) => {
                             if (width > 0 && height > 0) setModuleRatio(width / height);
                           }}
@@ -305,7 +331,9 @@ const ModulePage = () => {
                 return null;
               })()}
 
-              <p className="lead multiline">{module.description}</p>
+              <ExpandableText key={moduleId} as="div" className="lead">
+                <RichText text={module.description} />
+              </ExpandableText>
             </div>
 
             <div className={styles.lessons}>
@@ -335,6 +363,9 @@ const ModulePage = () => {
                               '--video-maxh': aspect < 1 ? '62vh' : '46vh',
                             }}
                           >
+                            {!settledSlots.has(lesson.id) && (
+                              <div className={styles.videoLoader} aria-hidden="true" />
+                            )}
                             {canMountPlayer(lesson.id) && (
                               <KinescopePlayer
                                 videoId={kinescope.videoId}
@@ -342,9 +373,10 @@ const ModulePage = () => {
                                 preload="none"
                                 watermark={watermark}
                                 drmAuthToken={videoToken || undefined}
-                                onReady={() => advancePlayerQueue(lesson.id)}
-                                onInitError={() => advancePlayerQueue(lesson.id)}
-                                onJSLoadError={() => advancePlayerQueue(lesson.id)}
+                                onInit={() => hideLoader(lesson.id)}
+                                onReady={() => settleSlot(lesson.id)}
+                                onInitError={() => settleSlot(lesson.id)}
+                                onJSLoadError={() => settleSlot(lesson.id)}
                                 onSizeChanged={({ width, height }) => {
                                   if (!(width > 0 && height > 0)) return;
                                   const ar = width / height;
@@ -379,7 +411,9 @@ const ModulePage = () => {
                         onEnded={() => markWatched(lesson)}
                       />
                     )}
-                    <p className={styles.lessonDesc}>{lesson.description}</p>
+                    <ExpandableText as="div" className={styles.lessonDesc}>
+                      <RichText text={lesson.description} />
+                    </ExpandableText>
 
                     {/* Скачиваемые материалы: ссылка подписана бэкендом,
                         браузер сохранит файл под исходным именем */}

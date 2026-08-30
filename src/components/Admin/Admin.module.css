@@ -401,6 +401,11 @@
   color-scheme: dark;
 }
 
+.timeInput {
+  width: 130px;
+  color-scheme: dark;
+}
+
 /* Работает и на button, и на Link */
 .smallBtn {
   flex: none;

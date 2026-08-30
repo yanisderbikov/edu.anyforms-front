@@ -1,0 +1,65 @@
+/* Жирный внутри описаний: цвет ярче основного текста, чтобы выделение читалось */
+.bold {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Наклонный — только наклон, насыщенность не меняем */
+.italic {
+  font-style: italic;
+  font-weight: inherit;
+}
+
+/* Ссылка — акцентный голубой */
+.link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(108, 134, 189, 0.4);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.link:hover {
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+}
+
+/* Тот же домен, но без перехода — внутри карточки-ссылки */
+.linkPlain {
+  color: var(--accent);
+}
+
+/* Обычный абзац: переносы строк из админки сохраняются */
+.para {
+  display: block;
+  white-space: pre-line;
+}
+
+/* Список: отступ «табом», маркер в акцентном цвете */
+.list {
+  margin: 0.5em 0;
+  padding-left: 1.6em;
+}
+
+.list:last-child {
+  margin-bottom: 0;
+}
+
+ul.list {
+  list-style: disc;
+}
+
+ol.list {
+  list-style: decimal;
+}
+
+.item {
+  padding-left: 0.2em;
+}
+
+.item::marker {
+  color: var(--accent);
+}
+
+.item + .item {
+  margin-top: 0.3em;
+}

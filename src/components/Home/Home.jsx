@@ -4,6 +4,7 @@ import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ProgressRing from '../shared/ProgressRing';
+import RichText from '../shared/RichText';
 import { getAuth, logout } from '../../auth';
 import { fetchCourse, invalidateCourse } from '../../api/courseApi';
 import styles from './Home.module.css';
@@ -40,10 +41,16 @@ const LockIcon = () => (
   </svg>
 );
 
+// opensAt приходит московским временем «2026-09-01T14:00»; полночь = «в этот день»,
+// время не показываем
 const formatOpensAt = (iso) => {
   if (!iso) return 'Скоро откроется';
-  const date = new Date(`${iso}T00:00:00`);
-  return `Откроется ${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`;
+  const [day, time] = iso.split('T');
+  const dayText = new Date(`${day}T00:00:00`)
+    .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  return time && time !== '00:00'
+    ? `Откроется ${dayText} в ${time} (мск)`
+    : `Откроется ${dayText}`;
 };
 
 /* Призрак главной: та же сетка и те же карточки, только вместо содержимого —
@@ -167,7 +174,9 @@ const Home = () => {
                     {data.course.title.split(' ').slice(1).join(' ')}
                   </span>
                 </h1>
-                <p className="lead multiline">{data.course.subtitle}</p>
+                <div className="lead">
+                  <RichText text={data.course.subtitle} />
+                </div>
               </div>
               {/* Сводка: сколько модулей пройдено целиком.
                   Десктоп — крупное кольцо, мобилка — компактное напротив заголовка */}
@@ -210,7 +219,9 @@ const Home = () => {
                         </span>
                       )}
                     </div>
-                    <p className={styles.cardDesc}>{m.description}</p>
+                    <div className={styles.cardDesc}>
+                      <RichText text={m.description} plainLinks />
+                    </div>
                     <span className={locked ? styles.cardLockNote : styles.cardOpenNote}>
                       {locked
                         ? formatOpensAt(m.opensAt)

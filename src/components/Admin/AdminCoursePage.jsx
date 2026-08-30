@@ -7,10 +7,16 @@ import AutoTextarea from '../shared/AutoTextarea';
 import { getAdminCourse, updateCourse, createModule } from '../../api/adminApi';
 import styles from './Admin.module.css';
 
+// opensAt приходит московским временем «2026-09-01T14:00»; полночь = «в этот день»,
+// время не показываем
 const formatOpensAt = (iso) => {
   if (!iso) return null;
-  const date = new Date(`${iso}T00:00:00`);
-  return `откроется ${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`;
+  const [day, time] = iso.split('T');
+  const dayText = new Date(`${day}T00:00:00`)
+    .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  return time && time !== '00:00'
+    ? `откроется ${dayText} в ${time} (мск)`
+    : `откроется ${dayText}`;
 };
 
 const lessonsLabel = (count) => {
