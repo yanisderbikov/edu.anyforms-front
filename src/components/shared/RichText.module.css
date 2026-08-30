@@ -1,0 +1,23 @@
+/* Жирный внутри описаний: цвет ярче основного текста, чтобы выделение читалось */
+.bold {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Ссылка — акцентный голубой */
+.link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(108, 134, 189, 0.4);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.link:hover {
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+}
+
+/* Тот же домен, но без перехода — внутри карточки-ссылки */
+.linkPlain {
+  color: var(--accent);
+}

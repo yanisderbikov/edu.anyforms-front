@@ -4,6 +4,7 @@ import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ProgressRing from '../shared/ProgressRing';
+import RichText from '../shared/RichText';
 import { getAuth, logout } from '../../auth';
 import { fetchCourse, invalidateCourse } from '../../api/courseApi';
 import styles from './Home.module.css';
@@ -173,7 +174,9 @@ const Home = () => {
                     {data.course.title.split(' ').slice(1).join(' ')}
                   </span>
                 </h1>
-                <p className="lead multiline">{data.course.subtitle}</p>
+                <p className="lead multiline">
+                  <RichText text={data.course.subtitle} />
+                </p>
               </div>
               {/* Сводка: сколько модулей пройдено целиком.
                   Десктоп — крупное кольцо, мобилка — компактное напротив заголовка */}
@@ -216,7 +219,9 @@ const Home = () => {
                         </span>
                       )}
                     </div>
-                    <p className={styles.cardDesc}>{m.description}</p>
+                    <p className={styles.cardDesc}>
+                      <RichText text={m.description} plainLinks />
+                    </p>
                     <span className={locked ? styles.cardLockNote : styles.cardOpenNote}>
                       {locked
                         ? formatOpensAt(m.opensAt)

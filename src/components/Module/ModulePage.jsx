@@ -5,6 +5,7 @@ import apiClient from '../../apiClient';
 import Header from '../shared/Header/Header';
 import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
+import RichText from '../shared/RichText';
 import { fetchModule, fetchVideoToken, invalidateCourse } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
@@ -329,7 +330,9 @@ const ModulePage = () => {
                 return null;
               })()}
 
-              <p className="lead multiline">{module.description}</p>
+              <p className="lead multiline">
+                <RichText text={module.description} />
+              </p>
             </div>
 
             <div className={styles.lessons}>
@@ -407,7 +410,9 @@ const ModulePage = () => {
                         onEnded={() => markWatched(lesson)}
                       />
                     )}
-                    <p className={styles.lessonDesc}>{lesson.description}</p>
+                    <p className={styles.lessonDesc}>
+                      <RichText text={lesson.description} />
+                    </p>
 
                     {/* Скачиваемые материалы: ссылка подписана бэкендом,
                         браузер сохранит файл под исходным именем */}
