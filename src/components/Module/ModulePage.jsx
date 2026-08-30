@@ -331,7 +331,7 @@ const ModulePage = () => {
                 return null;
               })()}
 
-              <ExpandableText key={moduleId} className="lead multiline">
+              <ExpandableText key={moduleId} as="div" className="lead">
                 <RichText text={module.description} />
               </ExpandableText>
             </div>
@@ -411,7 +411,7 @@ const ModulePage = () => {
                         onEnded={() => markWatched(lesson)}
                       />
                     )}
-                    <ExpandableText className={styles.lessonDesc}>
+                    <ExpandableText as="div" className={styles.lessonDesc}>
                       <RichText text={lesson.description} />
                     </ExpandableText>
 

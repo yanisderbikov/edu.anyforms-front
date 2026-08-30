@@ -174,9 +174,9 @@ const Home = () => {
                     {data.course.title.split(' ').slice(1).join(' ')}
                   </span>
                 </h1>
-                <p className="lead multiline">
+                <div className="lead">
                   <RichText text={data.course.subtitle} />
-                </p>
+                </div>
               </div>
               {/* Сводка: сколько модулей пройдено целиком.
                   Десктоп — крупное кольцо, мобилка — компактное напротив заголовка */}
@@ -219,9 +219,9 @@ const Home = () => {
                         </span>
                       )}
                     </div>
-                    <p className={styles.cardDesc}>
+                    <div className={styles.cardDesc}>
                       <RichText text={m.description} plainLinks />
-                    </p>
+                    </div>
                     <span className={locked ? styles.cardLockNote : styles.cardOpenNote}>
                       {locked
                         ? formatOpensAt(m.opensAt)
