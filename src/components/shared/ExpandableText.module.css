@@ -6,8 +6,12 @@
   min-width: 0;
 }
 
-/* Свёрнутое состояние: высоту задаёт скрипт — ровно N строк текста */
+/* Свёрнутое состояние: ровно --clamp-lines строк, остальное обрезано */
 .clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--clamp-lines, 2);
+  line-clamp: var(--clamp-lines, 2);
   overflow: hidden;
 }
 
