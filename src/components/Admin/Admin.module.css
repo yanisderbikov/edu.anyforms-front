@@ -688,3 +688,84 @@
     flex-basis: 100%;
   }
 }
+
+/* Импорт клиентов списком: кнопка под формой одиночной выдачи открывает модалку */
+.importBox {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--edge);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.modal {
+  width: 100%;
+  max-width: 620px;
+  max-height: calc(100dvh - 2 * var(--edge));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modalClose {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modalClose:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+/* Кнопки прижаты вправо, подписи слева */
+.modalFoot .hint {
+  margin-right: auto;
+}
+
+.modal .textarea {
+  width: 100%;
+}
+
+.importReport {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  word-break: break-word;
+}
+
+.importBad {
+  color: var(--danger);
+}

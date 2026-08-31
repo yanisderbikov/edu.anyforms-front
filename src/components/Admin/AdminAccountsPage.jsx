@@ -6,6 +6,7 @@ import apiClient from '../../apiClient';
 import {
   getStudents,
   createStudent,
+  createStudentsBulk,
   setStudentActive,
   setStudentRole,
   setStudentPlan,
@@ -22,6 +23,13 @@ const AdminAccountsPage = () => {
   const [newEmail, setNewEmail] = useState('');
   const [creating, setCreating] = useState(false);
   const [busyId, setBusyId] = useState(null); // id аккаунта, у которого крутится запрос
+
+  // Импорт списком — в модалке
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importPlan, setImportPlan] = useState('SELF');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   // Свой аккаунт: роль себе менять нельзя (бэк тоже не даст)
   const myEmail = apiClient.getJwtMetadata()?.email;
@@ -54,6 +62,58 @@ const AdminAccountsPage = () => {
       toastError(err);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const openImport = () => {
+    setImportResult(null); // отчёт прошлого импорта не должен висеть над новым списком
+    setImportOpen(true);
+  };
+
+  // Во время запроса не закрываем: иначе отчёт о том, кого добавили, потеряется
+  const closeImport = useCallback(() => {
+    if (!importing) setImportOpen(false);
+  }, [importing]);
+
+  // Esc закрывает, фон под модалкой не скроллится
+  useEffect(() => {
+    if (!importOpen) return undefined;
+    const onKeyDown = (e) => e.key === 'Escape' && closeImport();
+    document.addEventListener('keydown', onKeyDown);
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = overflow;
+    };
+  }, [importOpen, closeImport]);
+
+  // Из таблицы адреса приезжают через перенос, табуляцию, запятую или ; — режем по всему сразу
+  const parseEmails = (text) =>
+    text
+      .split(/[\s,;]+/)
+      .map((part) => part.replace(/^["'<]+|["'>]+$/g, '').trim())
+      .filter(Boolean);
+
+  const parsedEmails = parseEmails(importText);
+
+  const importAccounts = async () => {
+    if (parsedEmails.length === 0) return;
+    setImporting(true);
+    try {
+      const result = await createStudentsBulk(parsedEmails, importPlan);
+      setImportResult(result);
+      if (result.created > 0) {
+        toast.success(`Доступ выдан: ${result.created}`);
+        setImportText('');
+      } else {
+        toast('Новых адресов не нашлось');
+      }
+      load(query);
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -116,6 +176,12 @@ const AdminAccountsPage = () => {
           onClick={addAccount}
         >
           + Дать доступ
+        </button>
+      </div>
+
+      <div className={styles.importBox}>
+        <button type="button" className={styles.smallBtn} onClick={openImport}>
+          Импортировать списком
         </button>
       </div>
 
@@ -193,6 +259,84 @@ const AdminAccountsPage = () => {
           </div>
         )}
       </div>
+
+      {importOpen && (
+        <div
+          className={styles.modalOverlay}
+          role="presentation"
+          onMouseDown={(e) => e.target === e.currentTarget && closeImport()}
+        >
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Импорт клиентов">
+            <div className={styles.modalHead}>
+              <h2 className={styles.blockTitle}>Импорт клиентов списком</h2>
+              <button
+                type="button"
+                className={styles.modalClose}
+                aria-label="Закрыть"
+                onClick={closeImport}
+              >
+                ×
+              </button>
+            </div>
+
+            <textarea
+              className={`input ${styles.textarea}`}
+              rows={8}
+              autoFocus
+              placeholder="Вставьте email из таблицы — по одному в строке, можно через запятую"
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+            />
+
+            <p className={styles.hint}>
+              Аккаунты, которые уже есть, импорт не трогает — ни доступ, ни формат.
+            </p>
+
+            {importResult && (
+              <div className={styles.importReport}>
+                <p className={styles.hint}>Добавлено: {importResult.created}</p>
+                {importResult.existing.length > 0 && (
+                  <p className={styles.hint}>
+                    Уже были ({importResult.existing.length}): {importResult.existing.join(', ')}
+                  </p>
+                )}
+                {importResult.invalid.length > 0 && (
+                  <p className={`${styles.hint} ${styles.importBad}`}>
+                    Не похоже на email ({importResult.invalid.length}):{' '}
+                    {importResult.invalid.join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className={`${styles.row} ${styles.rowBottom} ${styles.modalFoot}`}>
+              <label className={styles.accountField}>
+                <span className={styles.accountCaption}>формат</span>
+                <select
+                  className={styles.accountSelect}
+                  value={importPlan}
+                  onChange={(e) => setImportPlan(e.target.value)}
+                >
+                  <option value="SELF">Общий</option>
+                  <option value="PERSONAL">Персональный</option>
+                </select>
+              </label>
+              <span className={styles.hint}>Распознано адресов: {parsedEmails.length}</span>
+              <button type="button" className={styles.smallBtn} onClick={closeImport}>
+                Закрыть
+              </button>
+              <button
+                type="button"
+                className="btn"
+                disabled={importing || parsedEmails.length === 0}
+                onClick={importAccounts}
+              >
+                {importing ? 'Импортируем…' : 'Выдать доступ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
