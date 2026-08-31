@@ -25,6 +25,18 @@ const SlideRow = ({ slide, index, count, onChanged }) => {
     imageUrl: slide.imageKey ?? '',
   });
   const [busy, setBusy] = useState(false);
+  // Локальное превью только что загруженной картинки — видно ещё до сохранения
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const showImagePreview = (file) =>
+    setImagePreview((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return URL.createObjectURL(file);
+    });
+
+  /* Что показывать: свежезагруженный файл; иначе, пока ключ не менялся,
+     подписанную ссылку с бэка; пустое поле — картинки нет */
+  const imageSrc = imagePreview ?? (form.imageUrl ? slide.image : null);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -145,21 +157,39 @@ const SlideRow = ({ slide, index, count, onChanged }) => {
         onChange={set('points')}
       />
 
-      <div className={styles.row}>
-        <input
-          className="input"
-          placeholder="Картинка: ссылка или ключ в бакете"
-          value={form.imageUrl}
-          onChange={set('imageUrl')}
-        />
-        <DirectUploadButton
-          prefix="onboarding"
-          label="Загрузить фото"
-          onUploaded={(key) => setForm((f) => ({ ...f, imageUrl: key }))}
-        />
+      <div className={styles.mediaBlock}>
+        <span className={styles.filesCaption}>Картинка слайда</span>
+        {imageSrc ? (
+          <img className={styles.preview} src={imageSrc} alt="" />
+        ) : (
+          <p className={styles.hint}>Картинки пока нет</p>
+        )}
+        <div className={styles.row}>
+          <DirectUploadButton
+            prefix="onboarding"
+            label={form.imageUrl ? 'Заменить фото' : 'Загрузить фото'}
+            onUploaded={(key, file) => {
+              showImagePreview(file);
+              setForm((f) => ({ ...f, imageUrl: key }));
+            }}
+          />
+          {form.imageUrl && (
+            <button
+              type="button"
+              className={`${styles.smallBtn} ${styles.danger}`}
+              onClick={() => {
+                setImagePreview((old) => {
+                  if (old) URL.revokeObjectURL(old);
+                  return null;
+                });
+                setForm((f) => ({ ...f, imageUrl: '' }));
+              }}
+            >
+              Убрать фото
+            </button>
+          )}
+        </div>
       </div>
-
-      {slide.image && <img className={styles.preview} src={slide.image} alt="" />}
 
       <div className={styles.row}>
         <button
