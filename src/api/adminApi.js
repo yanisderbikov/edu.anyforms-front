@@ -60,6 +60,10 @@ export const getStudents = (search) =>
 export const createStudent = (email) =>
   call(apiClient.instance.post('/api/admin/students', { email }));
 
+/** Списком: заводит только новых, существующих не трогает. Вернёт {created, existing, invalid} */
+export const createStudentsBulk = (emails, plan) =>
+  call(apiClient.instance.post('/api/admin/students/bulk', { emails, plan }));
+
 /** Отключённого не реактивирует даже покупка — вернуть можно только здесь */
 export const setStudentActive = (id, active) =>
   call(apiClient.instance.patch(`/api/admin/students/${id}/active`, { active }));
