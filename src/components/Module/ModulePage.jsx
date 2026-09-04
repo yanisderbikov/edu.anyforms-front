@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import KinescopePlayer from '@kinescope/react-kinescope-player';
 import apiClient from '../../apiClient';
 import Header from '../shared/Header/Header';
+import LegalFooter from '../shared/LegalFooter/LegalFooter';
 import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import RichText from '../shared/RichText';
@@ -446,6 +447,8 @@ const ModulePage = () => {
           </>
         )}
       </main>
+
+      <LegalFooter />
 
       {/* Ачивка: модуль пройден целиком */}
       {achievement && (

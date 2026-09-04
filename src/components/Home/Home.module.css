@@ -310,3 +310,11 @@ a.card:hover .cardImage {
     height: 64px;
   }
 }
+
+/* На телефоне текст не мельче 16px */
+@media (max-width: 640px) {
+  .logoutBtn,
+  .supportMenu a {
+    font-size: 16px;
+  }
+}

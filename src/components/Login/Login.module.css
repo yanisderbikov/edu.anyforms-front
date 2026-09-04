@@ -67,6 +67,23 @@
   font-size: var(--fs-small);
 }
 
+/* Ссылка на политику ПДн — обязательна в точке сбора e-mail (152-ФЗ) */
+.legalNote {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.legalLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legalLink:hover {
+  color: var(--text);
+}
+
 .formLinks {
   display: flex;
   flex-wrap: wrap;

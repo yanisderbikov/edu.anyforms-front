@@ -222,3 +222,18 @@ a {
   margin: 0 auto;
   padding: 0 var(--edge);
 }
+
+/* ── Мобильные: минимальный размер текста 16px ──────────────────
+   На телефоне ничего не должно быть мельче 16px: мелкий текст плохо
+   читается, а поля ввода меньше 16px Safari зумит при фокусе. */
+@media (max-width: 640px) {
+  :root {
+    --fs-body: 16px;
+    --fs-small: 16px;
+  }
+
+  .eyebrow {
+    font-size: 16px;
+    letter-spacing: 1.6px;
+  }
+}

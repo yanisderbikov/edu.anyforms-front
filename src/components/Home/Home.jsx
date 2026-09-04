@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
+import LegalFooter from '../shared/LegalFooter/LegalFooter';
 import SupportHint from '../shared/SupportHint';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ProgressRing from '../shared/ProgressRing';
@@ -244,6 +245,8 @@ const Home = () => {
           </>
         )}
       </main>
+
+      <LegalFooter />
 
       {/* Плавающая кнопка поддержки справа снизу */}
       {data?.support && (
