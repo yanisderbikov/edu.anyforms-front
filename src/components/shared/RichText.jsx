@@ -7,6 +7,7 @@ import styles from './RichText.module.css';
      ссылка       — кликабельная, показывается одним доменом
      «- пункт»    — маркированный список с отступом и точкой
      «1. пункт»   — нумерованный список с отступом
+     →            — стрелка в акцентном цвете, как маркеры списков
    Компонент отдаёт набор блоков без обёртки: контейнер задаёт родитель. */
 
 /* Маркер парного выделения либо ссылка целиком */
@@ -18,6 +19,21 @@ const TRAILING = /[.,;:!?)»"']+$/;
 /* Строки-пункты: дефис любого начертания или «1.» / «1)» */
 const BULLET = /^[-–—•]\s+(.+)$/;
 const ORDERED = /^(\d+)[.)]\s+(.+)$/;
+
+/* Стрелки — в акцентном цвете, как маркеры списков. Красим и внутри
+   жирного/наклонного, поэтому это не токен TOKEN, а отдельный проход
+   по каждому текстовому куску */
+const ARROWS = /(→+)/;
+const withArrows = (text, keyBase) =>
+  text.split(ARROWS).map((part, i) =>
+    ARROWS.test(part) ? (
+      <span key={`${keyBase}-${i}`} className={styles.arrow}>
+        {part}
+      </span>
+    ) : (
+      part
+    )
+  );
 
 /* Ссылку показываем коротко — одним доменом, без www и пути */
 const domainOf = (url) => {
@@ -42,11 +58,21 @@ const inline = (text, plainLinks) => {
     const url = link ? link.slice(0, link.length - tail.length) : '';
     if (link && !url) continue;
 
-    if (m.index > last) nodes.push(text.slice(last, m.index));
+    if (m.index > last) nodes.push(...withArrows(text.slice(last, m.index), key++));
 
-    if (bold) nodes.push(<strong key={key++} className={styles.bold}>{bold}</strong>);
-    else if (italic) nodes.push(<em key={key++} className={styles.italic}>{italic}</em>);
-    else {
+    if (bold) {
+      nodes.push(
+        <strong key={key++} className={styles.bold}>
+          {withArrows(bold, 0)}
+        </strong>
+      );
+    } else if (italic) {
+      nodes.push(
+        <em key={key++} className={styles.italic}>
+          {withArrows(italic, 0)}
+        </em>
+      );
+    } else {
       nodes.push(
         plainLinks ? (
           <span key={key++} className={styles.linkPlain}>
@@ -70,7 +96,7 @@ const inline = (text, plainLinks) => {
     last = m.index + raw.length;
   }
 
-  if (last < text.length) nodes.push(text.slice(last));
+  if (last < text.length) nodes.push(...withArrows(text.slice(last), key++));
   return nodes;
 };
 
