@@ -158,7 +158,7 @@ const Login = () => {
                     Нажимая «Получить код», вы подтверждаете, что ознакомлены с{' '}
                     <a
                       className={styles.legalLink}
-                      href="https://anyforms.ru/course/privacy"
+                      href="https://anyforms.ru/privacy"
                       target="_blank"
                       rel="noopener noreferrer"
                     >

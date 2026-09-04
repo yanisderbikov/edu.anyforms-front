@@ -5,8 +5,8 @@ import styles from './LegalFooter.module.css';
    e-mail (логин), но и в любой момент пользования платформой — поэтому ссылка
    стоит в подвале всех страниц после входа. Оператор — тот же, что и продавец
    курса на anyforms.ru. */
-const PRIVACY_URL = 'https://anyforms.ru/course/privacy';
-const REQUISITES_URL = 'https://anyforms.ru/founders/dmitry?from=course';
+const PRIVACY_URL = 'https://anyforms.ru/privacy';
+const REQUISITES_URL = 'https://anyforms.ru/requisites?from=course';
 
 const LegalFooter = () => (
   <footer className={styles.footer}>
