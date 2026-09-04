@@ -34,6 +34,24 @@ const DownloadIcon = () => (
   </svg>
 );
 
+/* Скачиваемые материалы урока или модуля: ссылка подписана бэкендом,
+   браузер сохранит файл под исходным именем */
+const Materials = ({ title, files }) =>
+  files?.length > 0 ? (
+    <div className={styles.files}>
+      <span className={styles.filesTitle}>{title}</span>
+      {files.map((f) => (
+        <a key={f.id} className={styles.fileLink} href={f.url} target="_blank" rel="noreferrer">
+          <span className={styles.fileIcon}>
+            <DownloadIcon />
+          </span>
+          <span className={styles.fileName}>{f.name}</span>
+          {f.sizeBytes != null && <span className={styles.fileSize}>{formatFileSize(f.sizeBytes)}</span>}
+        </a>
+      ))}
+    </div>
+  ) : null;
+
 /* Кусочки конфетти для ачивки: детерминированные, чтобы не дёргались при ререндере */
 const CONFETTI = Array.from({ length: 24 }, (_, i) => ({
   left: (i * 41) % 100,
@@ -349,6 +367,8 @@ const ModulePage = () => {
               <ExpandableText key={moduleId} as="div" className="lead">
                 <RichText text={module.videoDescription} />
               </ExpandableText>
+
+              <Materials title="Материалы модуля" files={module.files} />
             </div>
 
             <div className={styles.lessons}>
@@ -432,30 +452,7 @@ const ModulePage = () => {
                       <RichText text={lesson.description} />
                     </ExpandableText>
 
-                    {/* Скачиваемые материалы: ссылка подписана бэкендом,
-                        браузер сохранит файл под исходным именем */}
-                    {lesson.files?.length > 0 && (
-                      <div className={styles.files}>
-                        <span className={styles.filesTitle}>Материалы урока</span>
-                        {lesson.files.map((f) => (
-                          <a
-                            key={f.id}
-                            className={styles.fileLink}
-                            href={f.url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <span className={styles.fileIcon}>
-                              <DownloadIcon />
-                            </span>
-                            <span className={styles.fileName}>{f.name}</span>
-                            {f.sizeBytes != null && (
-                              <span className={styles.fileSize}>{formatFileSize(f.sizeBytes)}</span>
-                            )}
-                          </a>
-                        ))}
-                      </div>
-                    )}
+                    <Materials title="Материалы урока" files={lesson.files} />
                   </section>
                 );
               })}

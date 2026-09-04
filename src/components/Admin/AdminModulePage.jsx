@@ -14,11 +14,42 @@ import {
   deleteLesson,
   createLessonFile,
   deleteLessonFile,
+  createModuleFile,
+  deleteModuleFile,
 } from '../../api/adminApi';
 import { fetchVideoToken } from '../../api/courseApi';
 import { formatFileSize } from '../../shared/format';
 import { parseKinescope } from '../../shared/kinescope';
 import styles from './Admin.module.css';
+
+/* ── Файлы-материалы урока или модуля. Прикрепляются и удаляются сразу,
+     без кнопки «Сохранить»: сам файл к этому моменту уже лежит в S3 ── */
+const FilesBlock = ({ caption, files, doneMessage, onAttach, onRemove }) => (
+  <div className={styles.filesBlock}>
+    <span className={styles.filesCaption}>{caption}</span>
+    {(files ?? []).map((f) => (
+      <div key={f.id} className={styles.fileRow}>
+        <a className={styles.fileName} href={f.url} target="_blank" rel="noreferrer">
+          {f.name}
+        </a>
+        {f.sizeBytes != null && <span className={styles.fileSize}>{formatFileSize(f.sizeBytes)}</span>}
+        <button
+          type="button"
+          className={`${styles.smallBtn} ${styles.danger}`}
+          onClick={() => onRemove(f)}
+        >
+          Удалить
+        </button>
+      </div>
+    ))}
+    <DirectUploadButton
+      prefix="files"
+      label="+ Прикрепить файл"
+      doneMessage={doneMessage}
+      onUploaded={onAttach}
+    />
+  </div>
+);
 
 /* ── Урок: заголовок, видео, обложка, описание. Порядок — стрелками вверх/вниз.
      Пока есть несохранённые правки, строка подсвечена, «Сохранить» — яркая ── */
@@ -214,34 +245,13 @@ const LessonRow = ({ lesson, index, count, onChanged, videoToken }) => {
         onChange={set('description')}
       />
 
-      <div className={styles.filesBlock}>
-        <span className={styles.filesCaption}>
-          Файлы урока — студент сможет их скачать; прикрепляются и удаляются сразу
-        </span>
-        {(lesson.files ?? []).map((f) => (
-          <div key={f.id} className={styles.fileRow}>
-            <a className={styles.fileName} href={f.url} target="_blank" rel="noreferrer">
-              {f.name}
-            </a>
-            {f.sizeBytes != null && (
-              <span className={styles.fileSize}>{formatFileSize(f.sizeBytes)}</span>
-            )}
-            <button
-              type="button"
-              className={`${styles.smallBtn} ${styles.danger}`}
-              onClick={() => removeFile(f)}
-            >
-              Удалить
-            </button>
-          </div>
-        ))}
-        <DirectUploadButton
-          prefix="files"
-          label="+ Прикрепить файл"
-          doneMessage="Файл прикреплён к уроку"
-          onUploaded={attachFile}
-        />
-      </div>
+      <FilesBlock
+        caption="Файлы урока — студент сможет их скачать; прикрепляются и удаляются сразу"
+        files={lesson.files}
+        doneMessage="Файл прикреплён к уроку"
+        onAttach={attachFile}
+        onRemove={removeFile}
+      />
 
       <div className={styles.row}>
         <button
@@ -278,32 +288,39 @@ const AdminModulePage = () => {
       return { ...p, [field]: URL.createObjectURL(file) };
     });
 
-  const load = useCallback(() => {
-    getAdminCourse()
-      .then((d) => {
-        const found = d.modules.find((m) => m.id === moduleId);
-        if (!found) {
-          setError('Модуль не найден');
-          return;
-        }
-        setModule(found);
-        const [opensDate = '', opensTime = ''] = (found.opensAt ?? '').split('T');
-        setForm({
-          order: found.order,
-          title: found.title,
-          description: found.description ?? '',
-          videoDescription: found.videoDescription ?? '',
-          imageUrl: found.imageKey ?? '',
-          coverUrl: found.coverKey ?? '',
-          videoUrl: found.videoKey ?? '',
-          videoCoverUrl: found.videoCoverKey ?? '',
-          opensDate,
-          opensTime,
-        });
-        setError('');
-      })
-      .catch((e) => setError(`${e.message}. Проверьте, что бэкенд запущен на :8091.`));
-  }, [moduleId]);
+  /* keepForm — обновить только данные с бэка (например, список файлов),
+     не затирая несохранённые правки в полях модуля */
+  const load = useCallback(
+    ({ keepForm = false } = {}) => {
+      getAdminCourse()
+        .then((d) => {
+          const found = d.modules.find((m) => m.id === moduleId);
+          if (!found) {
+            setError('Модуль не найден');
+            return;
+          }
+          setModule(found);
+          if (!keepForm) {
+            const [opensDate = '', opensTime = ''] = (found.opensAt ?? '').split('T');
+            setForm({
+              order: found.order,
+              title: found.title,
+              description: found.description ?? '',
+              videoDescription: found.videoDescription ?? '',
+              imageUrl: found.imageKey ?? '',
+              coverUrl: found.coverKey ?? '',
+              videoUrl: found.videoKey ?? '',
+              videoCoverUrl: found.videoCoverKey ?? '',
+              opensDate,
+              opensTime,
+            });
+          }
+          setError('');
+        })
+        .catch((e) => setError(`${e.message}. Проверьте, что бэкенд запущен на :8091.`));
+    },
+    [moduleId]
+  );
 
   useEffect(() => {
     load();
@@ -353,6 +370,28 @@ const AdminModulePage = () => {
       toastError(err);
     } finally {
       setCreatingLesson(false);
+    }
+  };
+
+  /* Файлы модуля, как у урока, сохраняются сразу. Форму при этом не трогаем —
+     набранный, но не сохранённый текст должен пережить загрузку файла */
+  const attachModuleFile = async (key, file) => {
+    await createModuleFile(moduleId, {
+      name: file.name,
+      fileUrl: key,
+      sizeBytes: file.size,
+    });
+    load({ keepForm: true });
+  };
+
+  const removeModuleFile = async (file) => {
+    if (!window.confirm(`Удалить файл «${file.name}»?`)) return;
+    try {
+      await deleteModuleFile(file.id);
+      toast.success('Файл удалён');
+      load({ keepForm: true });
+    } catch (err) {
+      toastError(err);
     }
   };
 
@@ -466,7 +505,7 @@ const AdminModulePage = () => {
               <div className={styles.mediaGroupHead}>
                 <span className={styles.mediaGroupTitle}>Страница модуля</span>
                 <span className={styles.hint}>
-                  Сверху обложка-баннер во всю ширину, ниже — заголовок, видео и описание под ним
+                  Сверху обложка-баннер во всю ширину, ниже — заголовок, видео, описание и файлы
                 </span>
               </div>
 
@@ -620,6 +659,14 @@ const AdminModulePage = () => {
                   onChange={set('videoDescription')}
                 />
               </div>
+
+              <FilesBlock
+                caption="Файлы модуля — под описанием, студент сможет их скачать; прикрепляются и удаляются сразу"
+                files={module.files}
+                doneMessage="Файл прикреплён к модулю"
+                onAttach={attachModuleFile}
+                onRemove={removeModuleFile}
+              />
             </div>
             <div className={styles.row}>
               <label className={styles.dateLabel}>
