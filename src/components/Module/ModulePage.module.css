@@ -377,3 +377,11 @@
   aspect-ratio: 16 / 9;
   border-radius: var(--radius);
 }
+
+/* На телефоне текст не мельче 16px */
+@media (max-width: 640px) {
+  .filesTitle {
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+}

@@ -276,3 +276,10 @@
 .nextBtn {
   min-width: 220px;
 }
+
+/* На телефоне текст не мельче 16px */
+@media (max-width: 640px) {
+  .backBtn {
+    font-size: 16px;
+  }
+}

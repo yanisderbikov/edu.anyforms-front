@@ -81,6 +81,14 @@ export const completeLesson = async (lessonId) => {
   return new Set(cache.completedLessonIds);
 };
 
+/** Первый запуск видео урока: след для аналитики «начал, но не досмотрел».
+ *  Ответ — тот же прогресс, кладём в кеш, чтобы он не отставал. */
+export const startLesson = async (lessonId) => {
+  const res = await apiClient.instance.post(`/api/me/lessons/${lessonId}/start`);
+  if (res.data?.completedLessonIds) cache = applyFallback(res.data);
+  return cache;
+};
+
 export const finishOnboarding = async () => {
   const res = await apiClient.instance.post('/api/me/onboarding-done');
   if (res.data?.onboardingDone) {

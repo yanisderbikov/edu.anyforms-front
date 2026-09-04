@@ -25,10 +25,15 @@ const MENU = [
     title: 'доступы',
     items: [{ to: '/admin/accounts', label: 'Аккаунты' }],
   },
+  {
+    title: 'клиенты',
+    items: [{ to: '/admin/analytics', label: 'Аналитика' }],
+  },
 ];
 
-/** Каркас админки: шапка, сайдбар с разделами (на мобиле — бургер), защита по роли */
-const AdminLayout = ({ children }) => {
+/** Каркас админки: шапка, сайдбар с разделами (на мобиле — бургер), защита по роли.
+ *  wide — контент на всю ширину: для таблиц, которым тесно в колонке форм */
+const AdminLayout = ({ children, wide = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -98,7 +103,7 @@ const AdminLayout = ({ children }) => {
       )}
 
       <div className={styles.content}>
-        <main className={styles.main}>{children}</main>
+        <main className={`${styles.main} ${wide ? styles.mainWide : ''}`}>{children}</main>
       </div>
     </div>
   );

@@ -769,3 +769,354 @@
 .importBad {
   color: var(--danger);
 }
+
+/* ── Аналитика на /admin/analytics ── */
+/* Таблице со столбцом на модуль тесно в колонке форм — даём всю ширину */
+.mainWide {
+  max-width: var(--max-w);
+}
+
+/* Плитки воронки: число + подпись, клик фильтрует таблицу по ступени */
+.anFunnel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.anTile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-family: var(--font);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.anTile:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.anTileActive,
+.anTileActive:hover {
+  border-color: var(--accent);
+  background: rgba(108, 134, 189, 0.16);
+}
+
+.anTileNum {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.anTileLabel {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--text-faint);
+}
+
+.anToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Компактный инпут поиска: базовый .input слишком крупный для тулбара */
+.anInput {
+  flex: 1 1 220px;
+  min-width: 200px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.anInput:focus {
+  border-color: var(--accent);
+}
+
+.anChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.anChip {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.anChip:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.anChipActive,
+.anChipActive:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+
+.anCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.anMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  width: 100%;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.anMetaActions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Таблица: горизонтальный скролл внутри рамки, липкая шапка */
+.anTableWrap {
+  width: 100%;
+  max-height: 75vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.anTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.anTable th,
+.anTable td {
+  padding: 10px 12px;
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.anTable th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.anTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.anSortBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.anSortBtn:hover,
+.anSortActive {
+  color: var(--text);
+}
+
+.anRow {
+  cursor: pointer;
+}
+
+.anRow:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.anRowInactive td {
+  opacity: 0.5;
+}
+
+.anEmail {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.anPlan {
+  margin-left: 8px;
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.anStage {
+  color: var(--text-dim);
+}
+
+.anMuted {
+  color: var(--text-faint);
+}
+
+.anProgress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.anBar {
+  display: inline-block;
+  width: 70px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.anBarFill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: #4caf7d;
+}
+
+/* Состояние модуля у клиента: цвет говорит быстрее цифр */
+.anPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  padding: 4px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.anPill small {
+  font-weight: 500;
+  font-size: 10px;
+  opacity: 0.85;
+}
+
+.stLocked {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.stNotOpened {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--text-faint);
+}
+
+.stOpened {
+  border-color: rgba(224, 168, 76, 0.6);
+  background: rgba(224, 168, 76, 0.1);
+  color: #e0a84c;
+}
+
+.stStarted {
+  border-color: rgba(108, 134, 189, 0.7);
+  background: rgba(108, 134, 189, 0.14);
+  color: #9db3e6;
+}
+
+.stInProgress {
+  border-color: var(--accent);
+  background: rgba(108, 134, 189, 0.45);
+  color: var(--white);
+}
+
+.stDone {
+  border-color: rgba(76, 175, 125, 0.7);
+  background: rgba(76, 175, 125, 0.16);
+  color: #7fd6a4;
+}
+
+/* Раскрытая строка с датами */
+.anDetails td {
+  background: rgba(255, 255, 255, 0.03);
+  white-space: normal;
+}
+
+.anDetailsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.anDetailsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+}
+
+.anDetailsTitle {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.anLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+@media (max-width: 640px) {
+  .anFunnel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .anMetaActions {
+    margin-left: 0;
+  }
+}

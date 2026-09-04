@@ -136,3 +136,8 @@ export const uploadToS3 = (uploadUrl, file, onProgress) =>
     xhr.onerror = () => reject(new Error('Не удалось загрузить в S3 (проверьте CORS на бакете)'));
     xhr.send(file);
   });
+
+/* ── Аналитика ── */
+
+/** Прогресс всех клиентов по модулям: одна выборка, сортировка и фильтры на фронте */
+export const getAnalytics = () => call(apiClient.instance.get('/api/admin/analytics/students'));
