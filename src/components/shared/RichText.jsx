@@ -7,6 +7,8 @@ import styles from './RichText.module.css';
      ссылка       — кликабельная, показывается одним доменом
      «- пункт»    — маркированный список с отступом и точкой
      «1. пункт»   — нумерованный список с отступом
+     «→ пункт»    — такой же список, только маркер — стрелка
+     →            — стрелка в тексте в акцентном цвете, как маркеры списков
    Компонент отдаёт набор блоков без обёртки: контейнер задаёт родитель. */
 
 /* Маркер парного выделения либо ссылка целиком */
@@ -15,9 +17,25 @@ const TOKEN = /\*([^*\n]+)\*|~([^~\n]+)~|(https?:\/\/[^\s<>"')\]]+|www\.[^\s<>"'
 /* Хвостовая пунктуация к ссылке не относится: «(см. https://a.ru/b).» */
 const TRAILING = /[.,;:!?)»"']+$/;
 
-/* Строки-пункты: дефис любого начертания или «1.» / «1)» */
+/* Строки-пункты: дефис любого начертания, «1.» / «1)» или стрелка */
 const BULLET = /^[-–—•]\s+(.+)$/;
 const ORDERED = /^(\d+)[.)]\s+(.+)$/;
+const ARROW_ITEM = /^→\s*(.+)$/;
+
+/* Стрелки — в акцентном цвете, как маркеры списков. Красим и внутри
+   жирного/наклонного, поэтому это не токен TOKEN, а отдельный проход
+   по каждому текстовому куску */
+const ARROWS = /(→+)/;
+const withArrows = (text, keyBase) =>
+  text.split(ARROWS).map((part, i) =>
+    ARROWS.test(part) ? (
+      <span key={`${keyBase}-${i}`} className={styles.arrow}>
+        {part}
+      </span>
+    ) : (
+      part
+    )
+  );
 
 /* Ссылку показываем коротко — одним доменом, без www и пути */
 const domainOf = (url) => {
@@ -42,11 +60,21 @@ const inline = (text, plainLinks) => {
     const url = link ? link.slice(0, link.length - tail.length) : '';
     if (link && !url) continue;
 
-    if (m.index > last) nodes.push(text.slice(last, m.index));
+    if (m.index > last) nodes.push(...withArrows(text.slice(last, m.index), key++));
 
-    if (bold) nodes.push(<strong key={key++} className={styles.bold}>{bold}</strong>);
-    else if (italic) nodes.push(<em key={key++} className={styles.italic}>{italic}</em>);
-    else {
+    if (bold) {
+      nodes.push(
+        <strong key={key++} className={styles.bold}>
+          {withArrows(bold, 0)}
+        </strong>
+      );
+    } else if (italic) {
+      nodes.push(
+        <em key={key++} className={styles.italic}>
+          {withArrows(italic, 0)}
+        </em>
+      );
+    } else {
       nodes.push(
         plainLinks ? (
           <span key={key++} className={styles.linkPlain}>
@@ -70,7 +98,7 @@ const inline = (text, plainLinks) => {
     last = m.index + raw.length;
   }
 
-  if (last < text.length) nodes.push(text.slice(last));
+  if (last < text.length) nodes.push(...withArrows(text.slice(last), key++));
   return nodes;
 };
 
@@ -79,7 +107,7 @@ const inline = (text, plainLinks) => {
 const toBlocks = (text) => {
   const blocks = [];
   let paragraph = [];
-  let list = null; // { type: 'ul' | 'ol', start, items }
+  let list = null; // { type: 'ul' | 'ol' | 'arrow', start, items }
 
   const flushParagraph = () => {
     /* Пустые строки вокруг списка в абзац не тащим — иначе при pre-line
@@ -98,8 +126,9 @@ const toBlocks = (text) => {
     const line = raw.trim();
     const bullet = line.match(BULLET);
     const ordered = !bullet && line.match(ORDERED);
+    const arrow = !bullet && !ordered && line.match(ARROW_ITEM);
 
-    if (!bullet && !ordered) {
+    if (!bullet && !ordered && !arrow) {
       flushList();
       /* Пустая строка сразу после списка — уже отбита отступом самого списка */
       if (line || paragraph.length) paragraph.push(raw);
@@ -107,12 +136,12 @@ const toBlocks = (text) => {
     }
 
     flushParagraph();
-    const type = bullet ? 'ul' : 'ol';
+    const type = bullet ? 'ul' : ordered ? 'ol' : 'arrow';
     if (list?.type !== type) {
       flushList();
       list = { type, start: ordered ? Number(ordered[1]) : 1, items: [] };
     }
-    list.items.push(bullet ? bullet[1] : ordered[2]);
+    list.items.push(bullet ? bullet[1] : ordered ? ordered[2] : arrow[1]);
   }
 
   flushParagraph();
@@ -135,15 +164,18 @@ const RichText = ({ text, plainLinks = false }) => {
             </span>
           );
         }
-        const List = block.type === 'ul' ? 'ul' : 'ol';
+        /* Список со стрелками — тот же <ul>, но маркер рисует CSS: браузерный
+           ::marker менять на «→» умеют не все */
+        const List = block.type === 'ol' ? 'ol' : 'ul';
+        const arrows = block.type === 'arrow';
         return (
           <List
             key={i}
-            className={styles.list}
+            className={arrows ? `${styles.list} ${styles.listArrow}` : styles.list}
             start={block.type === 'ol' && block.start !== 1 ? block.start : undefined}
           >
             {block.items.map((item, j) => (
-              <li key={j} className={styles.item}>
+              <li key={j} className={arrows ? `${styles.item} ${styles.itemArrow}` : styles.item}>
                 {inline(item, plainLinks)}
               </li>
             ))}

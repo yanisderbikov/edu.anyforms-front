@@ -28,6 +28,11 @@
   color: var(--accent);
 }
 
+/* Стрелка «→» — акцентный цвет, как у маркеров списков */
+.arrow {
+  color: var(--accent);
+}
+
 /* Обычный абзац: переносы строк из админки сохраняются */
 .para {
   display: block;
@@ -62,4 +67,22 @@ ol.list {
 
 .item + .item {
   margin-top: 0.3em;
+}
+
+/* Список со стрелками: браузерный маркер убираем, «→» рисуем сами в той же
+   колонке, где стоят точки и цифры — правый край стрелки на том же
+   расстоянии от текста, что точка после номера */
+ul.listArrow {
+  list-style: none;
+}
+
+.itemArrow {
+  position: relative;
+}
+
+.itemArrow::before {
+  content: '→';
+  position: absolute;
+  right: calc(100% + 0.4em);
+  color: var(--accent);
 }

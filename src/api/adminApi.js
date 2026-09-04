@@ -23,6 +23,13 @@ export const updateModule = (id, data) => call(apiClient.instance.put(`/api/admi
 
 export const deleteModule = (id) => call(apiClient.instance.delete(`/api/admin/modules/${id}`));
 
+/** Файл уже в S3 (см. presignUpload) — прикрепляем к модулю имя, ключ и размер */
+export const createModuleFile = (moduleId, data) =>
+  call(apiClient.instance.post(`/api/admin/modules/${moduleId}/files`, data));
+
+export const deleteModuleFile = (fileId) =>
+  call(apiClient.instance.delete(`/api/admin/module-files/${fileId}`));
+
 /* ── Уроки ── */
 
 export const createLesson = (moduleId, data) =>
