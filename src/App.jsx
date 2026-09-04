@@ -11,6 +11,7 @@ import AdminCoursePage from './components/Admin/AdminCoursePage';
 import AdminModulePage from './components/Admin/AdminModulePage';
 import AdminOnboardingPage from './components/Admin/AdminOnboardingPage';
 import AdminAccountsPage from './components/Admin/AdminAccountsPage';
+import AdminAnalyticsPage from './components/Admin/AdminAnalyticsPage';
 
 /* Защита роутов: не залогинен → /login; онбординг не пройден (статус в БД) → /onboarding */
 const RequireAuth = ({ children }) => {
@@ -85,6 +86,7 @@ const App = () => {
       <Route path="/admin/course/:moduleId" element={<AdminModulePage />} />
       <Route path="/admin/onboarding" element={<AdminOnboardingPage />} />
       <Route path="/admin/accounts" element={<AdminAccountsPage />} />
+      <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

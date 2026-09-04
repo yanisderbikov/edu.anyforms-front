@@ -9,7 +9,7 @@ import Skeleton from '../shared/Skeleton/Skeleton';
 import RichText from '../shared/RichText';
 import ExpandableText from '../shared/ExpandableText';
 import { fetchModule, fetchVideoToken, invalidateCourse } from '../../api/courseApi';
-import { fetchCompletedLessons, completeLesson } from '../../api/progressApi';
+import { fetchCompletedLessons, completeLesson, startLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
 import { parseKinescope } from '../../shared/kinescope';
 import styles from './ModulePage.module.css';
@@ -89,6 +89,7 @@ const ModulePage = () => {
      В ref, а не в state — события времени идут часто, ререндеры тут не нужны */
   const watched = useRef({});
   const sending = useRef(new Set()); // уроки, по которым отметка уже уходит на бэк
+  const started = useRef(new Set()); // уроки, старт которых уже отправлен с этой страницы
 
   useEffect(() => {
     setModule(null);
@@ -215,6 +216,18 @@ const ModulePage = () => {
     }
   };
 
+  /* Первый запуск видео → отмечаем старт на бэке: аналитике важно отличать
+     «открыл модуль» от «начал смотреть». Досмотренный урок заново не стартуем. */
+  const markStarted = (lesson) => {
+    if (completed.has(lesson.id) || started.current.has(lesson.id)) return;
+    started.current.add(lesson.id);
+    startLesson(lesson.id).catch((e) => {
+      // Не отметилось — следующий play попробует снова
+      started.current.delete(lesson.id);
+      console.error('Не удалось отметить старт урока:', e);
+    });
+  };
+
   /* Длительность приходит отдельным событием — без неё считать долю не от чего */
   const trackDuration = (lesson, duration) => {
     if (!(duration > 0)) return;
@@ -332,8 +345,9 @@ const ModulePage = () => {
                 return null;
               })()}
 
+              {/* Описание под видео — своё, не то, что в карточке на главной */}
               <ExpandableText key={moduleId} as="div" className="lead">
-                <RichText text={module.description} />
+                <RichText text={module.videoDescription} />
               </ExpandableText>
             </div>
 
@@ -387,6 +401,7 @@ const ModulePage = () => {
                                       : { ...r, [lesson.id]: ar }
                                   );
                                 }}
+                                onPlay={() => markStarted(lesson)}
                                 onDurationChange={({ duration }) =>
                                   trackDuration(lesson, duration)
                                 }
@@ -407,6 +422,7 @@ const ModulePage = () => {
                         controls
                         preload="none"
                         playsInline
+                        onPlay={() => markStarted(lesson)}
                         onDurationChange={(e) => trackDuration(lesson, e.target.duration)}
                         onTimeUpdate={(e) => trackTime(lesson, e.target.currentTime)}
                         onEnded={() => markWatched(lesson)}

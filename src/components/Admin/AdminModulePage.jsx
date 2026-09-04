@@ -292,6 +292,7 @@ const AdminModulePage = () => {
           order: found.order,
           title: found.title,
           description: found.description ?? '',
+          videoDescription: found.videoDescription ?? '',
           imageUrl: found.imageKey ?? '',
           coverUrl: found.coverKey ?? '',
           videoUrl: found.videoKey ?? '',
@@ -328,6 +329,7 @@ const AdminModulePage = () => {
     (Number(form.order) !== module.order ||
       form.title !== (module.title ?? '') ||
       form.description !== (module.description ?? '') ||
+      form.videoDescription !== (module.videoDescription ?? '') ||
       form.imageUrl !== (module.imageKey ?? '') ||
       form.coverUrl !== (module.coverKey ?? '') ||
       form.videoUrl !== (module.videoKey ?? '') ||
@@ -371,6 +373,7 @@ const AdminModulePage = () => {
         order: Number(form.order),
         title: form.title,
         description: form.description,
+        videoDescription: form.videoDescription,
         imageUrl: form.imageUrl || null,
         coverUrl: form.coverUrl || null,
         videoUrl: form.videoUrl || null,
@@ -420,18 +423,22 @@ const AdminModulePage = () => {
               </label>
               <input className="input" placeholder="Название" value={form.title} onChange={set('title')} />
             </div>
-            <AutoTextarea
-              className={`input ${styles.textarea}`}
-              placeholder="Описание"
-              minRows={5}
-              value={form.description}
-              onChange={set('description')}
-            />
-            {/* Медиа модуля, сгруппировано по месту показа */}
+            {/* Медиа и тексты модуля, сгруппировано по месту показа:
+                у карточки на главной и у страницы модуля описания разные */}
             <div className={styles.mediaGroup}>
               <div className={styles.mediaGroupHead}>
                 <span className={styles.mediaGroupTitle}>Главный экран курса</span>
-                <span className={styles.hint}>Картинка карточки модуля в списке модулей</span>
+                <span className={styles.hint}>Картинка и описание карточки модуля в списке модулей</span>
+              </div>
+              <div className={styles.mediaBlock}>
+                <span className={styles.filesCaption}>Описание в карточке</span>
+                <AutoTextarea
+                  className={`input ${styles.textarea}`}
+                  placeholder="Коротко, о чём модуль"
+                  minRows={3}
+                  value={form.description}
+                  onChange={set('description')}
+                />
               </div>
               <div className={styles.mediaBlock}>
                 <span className={styles.filesCaption}>Превью карточки 16:9</span>
@@ -459,7 +466,7 @@ const AdminModulePage = () => {
               <div className={styles.mediaGroupHead}>
                 <span className={styles.mediaGroupTitle}>Страница модуля</span>
                 <span className={styles.hint}>
-                  Сверху обложка-баннер во всю ширину, ниже — заголовок, видео и описание
+                  Сверху обложка-баннер во всю ширину, ниже — заголовок, видео и описание под ним
                 </span>
               </div>
 
@@ -601,6 +608,17 @@ const AdminModulePage = () => {
                     </button>
                   )}
                 </div>
+              </div>
+
+              <div className={styles.mediaBlock}>
+                <span className={styles.filesCaption}>Описание под видео</span>
+                <AutoTextarea
+                  className={`input ${styles.textarea}`}
+                  placeholder="Подробно, что ждёт в модуле"
+                  minRows={5}
+                  value={form.videoDescription}
+                  onChange={set('videoDescription')}
+                />
               </div>
             </div>
             <div className={styles.row}>
