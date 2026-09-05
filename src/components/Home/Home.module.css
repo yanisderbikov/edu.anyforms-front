@@ -318,3 +318,15 @@ a.card:hover .cardImage {
     font-size: 16px;
   }
 }
+
+/* ── Поддержка и чат под модулями ──────────────────────────────
+   Сами плитки — в SupportTiles, здесь только отступ от сетки */
+.helpRow {
+  margin-top: 18px;
+}
+
+@media (min-width: 760px) {
+  .helpRow {
+    margin-top: 20px;
+  }
+}
