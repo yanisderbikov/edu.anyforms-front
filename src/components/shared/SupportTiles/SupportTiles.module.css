@@ -1,0 +1,124 @@
+/* Две большие плитки в строку: пустые в рамке, при наведении
+   заливаются акцентом снизу вверх */
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+@media (min-width: 760px) {
+  .row {
+    gap: 20px;
+  }
+}
+
+.tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 22px;
+  min-height: clamp(150px, 16vw, 190px);
+  padding: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+/* Заливка: растёт снизу вверх, поэтому лежит отдельным слоем под содержимым */
+.tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tile:hover,
+.tile:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  outline: none;
+}
+
+.tile:hover::before,
+.tile:focus-visible::before {
+  transform: scaleY(1);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--accent);
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.tile:hover .icon,
+.tile:focus-visible .icon {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  font-weight: 600;
+  font-size: var(--fs-h3);
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+}
+
+.arrow {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-faint);
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.tile:hover .arrow,
+.tile:focus-visible .arrow {
+  color: var(--white);
+  transform: translate(2px, -2px);
+}
+
+/* Узкий экран: плитки остаются в строку, но компактнее */
+@media (max-width: 520px) {
+  .tile {
+    gap: 16px;
+    padding: 18px;
+    min-height: 140px;
+  }
+
+  .icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  /* Стрелка уходит в правый верхний угол: подписи в узкой плитке
+     нужна вся ширина строки */
+  .arrow {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+  }
+}

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Header from '../shared/Header/Header';
 import LegalFooter from '../shared/LegalFooter/LegalFooter';
 import SupportHint from '../shared/SupportHint';
+import SupportTiles, { ChatIcon } from '../shared/SupportTiles/SupportTiles';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ProgressRing from '../shared/ProgressRing';
 import RichText from '../shared/RichText';
@@ -20,18 +21,6 @@ const PersonIcon = () => (
       strokeLinejoin="round"
     />
     <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="1.8" />
-  </svg>
-);
-
-const ChatIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path
-      d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-2.9-.36-4.1-1L3 20l1.05-5.2A8.5 8.5 0 1 1 21 11.5Z"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
   </svg>
 );
 
@@ -242,6 +231,9 @@ const Home = () => {
                 );
               })}
             </div>
+
+            {/* Поддержка и чат под модулями */}
+            <SupportTiles support={data.support} className={styles.helpRow} />
           </>
         )}
       </main>

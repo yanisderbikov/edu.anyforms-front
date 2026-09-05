@@ -5,10 +5,11 @@ import apiClient from '../../apiClient';
 import Header from '../shared/Header/Header';
 import LegalFooter from '../shared/LegalFooter/LegalFooter';
 import SupportHint from '../shared/SupportHint';
+import SupportTiles from '../shared/SupportTiles/SupportTiles';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import RichText from '../shared/RichText';
 import ExpandableText from '../shared/ExpandableText';
-import { fetchModule, fetchVideoToken, invalidateCourse } from '../../api/courseApi';
+import { fetchCourse, fetchModule, fetchVideoToken, invalidateCourse } from '../../api/courseApi';
 import { fetchCompletedLessons, completeLesson, startLesson } from '../../api/progressApi';
 import { formatFileSize } from '../../shared/format';
 import { parseKinescope } from '../../shared/kinescope';
@@ -92,6 +93,7 @@ const ModulePage = () => {
   const [error, setError] = useState('');
   const [completed, setCompleted] = useState(new Set());
   const [achievement, setAchievement] = useState(false);
+  const [support, setSupport] = useState(null); // ссылки поддержки — из курса, в модуле их нет
   const [videoToken, setVideoToken] = useState(null);
   const [videoTokenReady, setVideoTokenReady] = useState(false);
   const [ratios, setRatios] = useState({}); // lessonId → реальные пропорции из плеера
@@ -115,6 +117,12 @@ const ModulePage = () => {
     fetchModule(moduleId).then(setModule).catch((e) => setError(e.message));
     fetchCompletedLessons().then(setCompleted).catch(() => {});
   }, [moduleId]);
+
+  /* Поддержка и чат приходят с курсом: он лежит в кэше после главной,
+     так что запрос уходит только при заходе сразу на страницу модуля */
+  useEffect(() => {
+    fetchCourse().then((d) => setSupport(d.support)).catch(() => {});
+  }, []);
 
   /* Токен воспроизведения Kinescope: плеер отдаёт его Kinescope, а тот приходит
      на наш бэкенд спросить, пускать ли этого зрителя (DRM-авторизация).
@@ -457,6 +465,9 @@ const ModulePage = () => {
                 );
               })}
             </div>
+
+            {/* Поддержка и чат в конце модуля */}
+            <SupportTiles support={support} className={styles.helpRow} />
           </>
         )}
       </main>
