@@ -9,6 +9,7 @@ import ProgressRing from '../shared/ProgressRing';
 import RichText from '../shared/RichText';
 import { getAuth, logout } from '../../auth';
 import { fetchCourse, invalidateCourse } from '../../api/courseApi';
+import { plural } from '../../shared/format';
 import styles from './Home.module.css';
 
 const PersonIcon = () => (
@@ -215,7 +216,7 @@ const Home = () => {
                     <span className={locked ? styles.cardLockNote : styles.cardOpenNote}>
                       {locked
                         ? formatOpensAt(m.opensAt)
-                        : `${m.lessonsCount} ${m.lessonsCount === 1 ? 'урок' : 'урока'} · Смотреть →`}
+                        : `${m.lessonsCount} ${plural(m.lessonsCount, ['урок', 'урока', 'уроков'])} · Смотреть →`}
                     </span>
                   </>
                 );
