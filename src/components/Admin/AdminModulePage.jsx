@@ -5,6 +5,7 @@ import KinescopePlayer from '@kinescope/react-kinescope-player';
 import SupportHint, { toastError } from '../shared/SupportHint';
 import AdminLayout, { DirectUploadButton, KinescopeUploadButton } from './AdminLayout';
 import AutoTextarea from '../shared/AutoTextarea';
+import { DEFAULT_FEEDBACK_TITLE, DEFAULT_FEEDBACK_LABEL } from '../shared/FeedbackBlock/FeedbackBlock';
 import {
   getAdminCourse,
   updateModule,
@@ -311,6 +312,10 @@ const AdminModulePage = () => {
               coverUrl: found.coverKey ?? '',
               videoUrl: found.videoKey ?? '',
               videoCoverUrl: found.videoCoverKey ?? '',
+              feedbackTitle: found.feedbackTitle ?? '',
+              feedbackDescription: found.feedbackDescription ?? '',
+              feedbackLabel: found.feedbackLabel ?? '',
+              feedbackUrl: found.feedbackUrl ?? '',
               opensDate,
               opensTime,
             });
@@ -352,6 +357,15 @@ const AdminModulePage = () => {
       form.videoUrl !== (module.videoKey ?? '') ||
       form.videoCoverUrl !== (module.videoCoverKey ?? '') ||
       (opensAt ?? '') !== (module.opensAt ?? ''));
+
+  // Обратная связь сохраняется отдельной кнопкой в своём блоке
+  const feedbackDirty =
+    !!form &&
+    !!module &&
+    (form.feedbackTitle !== (module.feedbackTitle ?? '') ||
+      form.feedbackDescription !== (module.feedbackDescription ?? '') ||
+      form.feedbackLabel !== (module.feedbackLabel ?? '') ||
+      form.feedbackUrl !== (module.feedbackUrl ?? ''));
 
   // Урок создаётся сразу — дальше строку просто редактируют и сохраняют
   const addLesson = async () => {
@@ -417,10 +431,41 @@ const AdminModulePage = () => {
         coverUrl: form.coverUrl || null,
         videoUrl: form.videoUrl || null,
         videoCoverUrl: form.videoCoverUrl || null,
+        // Обратная связь — из сохранённого: у неё своя кнопка, несохранённые правки остаются в форме
+        feedbackTitle: module.feedbackTitle ?? null,
+        feedbackDescription: module.feedbackDescription ?? null,
+        feedbackLabel: module.feedbackLabel ?? null,
+        feedbackUrl: module.feedbackUrl ?? null,
         opensAt,
       });
       toast.success('Модуль сохранён');
       load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  /* Обратная связь уходит тем же запросом, что и модуль: остальные поля —
+     из сохранённого, чтобы не утащить с собой правки блока «О модуле» */
+  const saveFeedback = async () => {
+    try {
+      await updateModule(moduleId, {
+        order: module.order,
+        title: module.title,
+        description: module.description ?? null,
+        videoDescription: module.videoDescription ?? null,
+        imageUrl: module.imageKey || null,
+        coverUrl: module.coverKey || null,
+        videoUrl: module.videoKey || null,
+        videoCoverUrl: module.videoCoverKey || null,
+        feedbackTitle: form.feedbackTitle || null,
+        feedbackDescription: form.feedbackDescription || null,
+        feedbackLabel: form.feedbackLabel || null,
+        feedbackUrl: form.feedbackUrl || null,
+        opensAt: module.opensAt ?? null,
+      });
+      toast.success('Обратная связь сохранена');
+      load({ keepForm: true });
     } catch (err) {
       toastError(err);
     }
@@ -732,6 +777,50 @@ const AdminModulePage = () => {
             >
               {creatingLesson ? 'Создаём…' : '+ Новый урок'}
             </button>
+          </section>
+
+          <section className={`card ${styles.block}`}>
+            <h3 className={styles.blockTitle}>Обратная связь</h3>
+            <p className={styles.hint}>
+              Кнопка в самом конце модуля, после уроков. Без ссылки не показывается; пустые
+              заголовок и подпись заменятся текстом по умолчанию, пустое описание не показывается.
+            </p>
+            <input
+              className="input"
+              placeholder={`Заголовок над кнопкой (по умолчанию «${DEFAULT_FEEDBACK_TITLE}»)`}
+              value={form.feedbackTitle}
+              onChange={set('feedbackTitle')}
+            />
+            <AutoTextarea
+              className={`input ${styles.textarea}`}
+              placeholder="Описание под заголовком — зачем нужна обратная связь"
+              minRows={3}
+              value={form.feedbackDescription}
+              onChange={set('feedbackDescription')}
+            />
+            <input
+              className="input"
+              placeholder={`Текст на кнопке (по умолчанию «${DEFAULT_FEEDBACK_LABEL}»)`}
+              maxLength={64}
+              value={form.feedbackLabel}
+              onChange={set('feedbackLabel')}
+            />
+            <input
+              className="input"
+              placeholder="Ссылка кнопки — форма, чат, что угодно"
+              value={form.feedbackUrl}
+              onChange={set('feedbackUrl')}
+            />
+            <div className={styles.row}>
+              <button
+                type="button"
+                className={`${styles.smallBtn} ${feedbackDirty ? styles.saveDirty : styles.saveIdle}`}
+                disabled={!feedbackDirty}
+                onClick={saveFeedback}
+              >
+                Сохранить обратную связь
+              </button>
+            </div>
           </section>
         </>
       )}
