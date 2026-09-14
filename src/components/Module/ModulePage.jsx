@@ -18,6 +18,13 @@ import styles from './ModulePage.module.css';
 /* Урок засчитывается, когда просмотрено столько ролика */
 const COMPLETE_AT = 0.95;
 
+/* В этих модулях уроки нумеруются с нуля (сверяется по названию модуля):
+   в базе номера всегда идут с единицы, сдвиг только при показе */
+const LESSONS_FROM_ZERO = new Set(['Заливка силикона и тест формы']);
+
+const lessonNumber = (module, index) =>
+  index + (LESSONS_FROM_ZERO.has(module.title?.trim()) ? 0 : 1);
+
 /* Скачок времени больше этого — перемотка, а не просмотр:
    события плеера идут чаще раза в секунду */
 const SEEK_GAP_SECONDS = 2;
@@ -389,7 +396,7 @@ const ModulePage = () => {
                       <span
                         className={`${styles.lessonNum} ${done ? styles.lessonNumDone : ''}`}
                       >
-                        {done ? '✓' : i + 1}
+                        {done ? '✓' : lessonNumber(module, i)}
                       </span>
                       <h2 className="h3">{lesson.title}</h2>
                     </div>
