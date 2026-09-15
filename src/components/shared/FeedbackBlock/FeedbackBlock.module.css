@@ -1,0 +1,77 @@
+/* Блок обратной связи в конце модуля: рамка как у плиток поддержки,
+   внутри заголовок, описание и одна кнопка. Занимает половину ширины
+   страницы, как одна плитка поддержки; на узком экране — всю */
+.block {
+  width: 50%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius);
+}
+
+.title {
+  margin: 0;
+}
+
+/* Описание под заголовком: мельче и приглушённее */
+.description {
+  margin-top: -6px;
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  color: var(--text-dim);
+  white-space: pre-line;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 17px 24px;
+  border-radius: var(--radius-btn);
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  outline: none;
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.arrow {
+  display: inline-flex;
+  flex: none;
+  transition: transform 0.25s ease;
+}
+
+.button:hover .arrow,
+.button:focus-visible .arrow {
+  transform: translate(2px, -2px);
+}
+
+@media (max-width: 520px) {
+  .block {
+    width: 100%;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .button {
+    padding: 15px 18px;
+    font-size: 16px;
+  }
+}
