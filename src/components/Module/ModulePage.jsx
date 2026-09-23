@@ -363,7 +363,7 @@ const ModulePage = () => {
                       className={styles.kinescope}
                       style={{
                         '--video-ar': aspect,
-                        '--video-maxh': aspect < 1 ? '62vh' : '46vh',
+                        '--video-maxw': aspect < 1 ? '400px' : '100%',
                       }}
                     >
                       {!settledSlots.has('intro') && (
@@ -438,7 +438,7 @@ const ModulePage = () => {
                             className={styles.kinescope}
                             style={{
                               '--video-ar': aspect,
-                              '--video-maxh': aspect < 1 ? '62vh' : '46vh',
+                              '--video-maxw': aspect < 1 ? '400px' : '100%',
                             }}
                           >
                             {!settledSlots.has(lesson.id) && (
