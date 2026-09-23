@@ -63,6 +63,11 @@
   gap: 56px;
 }
 
+/* Хардкод-заголовок над первым уроком */
+.lessonsHeading {
+  color: var(--accent);
+}
+
 .lesson {
   display: flex;
   flex-direction: column;

@@ -25,6 +25,11 @@ const LESSONS_FROM_ZERO = new Set(['Заливка силикона и тест 
 const lessonNumber = (module, index) =>
   index + (LESSONS_FROM_ZERO.has(module.title?.trim()) ? 0 : 1);
 
+/* Заголовок перед первым уроком в отдельных модулях (сверяется по названию) */
+const LESSONS_HEADING = {
+  'Изготовление контейнерной свечи': 'Видеокурс от 24 grams Shape studio. Гипс',
+};
+
 /* Скачок времени больше этого — перемотка, а не просмотр:
    события плеера идут чаще раза в секунду */
 const SEEK_GAP_SECONDS = 2;
@@ -380,6 +385,11 @@ const ModulePage = () => {
             </div>
 
             <div className={styles.lessons}>
+              {LESSONS_HEADING[module.title?.trim()] && module.lessons.length > 0 && (
+                <h2 className={`h2 ${styles.lessonsHeading}`}>
+                  {LESSONS_HEADING[module.title?.trim()]}
+                </h2>
+              )}
               {module.lessons.map((lesson, i) => {
                 const done = completed.has(lesson.id);
                 const kinescope = parseKinescope(lesson.videoUrl);
