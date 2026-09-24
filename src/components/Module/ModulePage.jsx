@@ -25,6 +25,11 @@ const LESSONS_FROM_ZERO = new Set(['Заливка силикона и тест 
 const lessonNumber = (module, index) =>
   index + (LESSONS_FROM_ZERO.has(module.title?.trim()) ? 0 : 1);
 
+/* Заголовок перед первым уроком в отдельных модулях (сверяется по названию) */
+const LESSONS_HEADING = {
+  'Изготовление контейнерной свечи': 'Видеокурс от 24 grams\nShape studio. Гипс',
+};
+
 /* Скачок времени больше этого — перемотка, а не просмотр:
    события плеера идут чаще раза в секунду */
 const SEEK_GAP_SECONDS = 2;
@@ -102,8 +107,9 @@ const ModulePage = () => {
   const [achievement, setAchievement] = useState(false);
   const [videoToken, setVideoToken] = useState(null);
   const [videoTokenReady, setVideoTokenReady] = useState(false);
-  const [ratios, setRatios] = useState({}); // lessonId → реальные пропорции из плеера
-  const [moduleRatio, setModuleRatio] = useState(null); // пропорции видео модуля
+  const [ratios, setRatios] = useState({}); // слот ('intro' | lessonId) → пропорции из плеера
+  /* Когда последний раз менялся вьюпорт (ресайз, поворот, полный экран) */
+  const viewportChangedAt = useRef(0);
   /* Сколько Kinescope-плееров уже загрузилось: плеер N+1 монтируется,
      только когда плеер N сообщил onReady (или явно не смог) */
   const [playersReady, setPlayersReady] = useState(0);
@@ -119,6 +125,7 @@ const ModulePage = () => {
 
   useEffect(() => {
     setModule(null);
+    setRatios({});
     setError('');
     fetchModule(moduleId).then(setModule).catch((e) => setError(e.message));
     fetchCompletedLessons().then(setCompleted).catch(() => {});
@@ -210,6 +217,31 @@ const ModulePage = () => {
   const settleSlot = (slot) => {
     hideLoader(slot);
     advancePlayerQueue(slot);
+  };
+
+  /* Плеер шлёт SizeChanged не только когда узнал размер ролика, но и на
+     каждое изменение своего окна: при повороте телефона, ресайзе, входе в
+     полный экран. Там приходят промежуточные размеры или размер экрана —
+     если принять их за пропорции видео, контейнер меняется, плеер снова
+     шлёт размер, и окно «плывёт». Поэтому такие моменты пропускаем */
+  useEffect(() => {
+    const mark = () => {
+      viewportChangedAt.current = Date.now();
+    };
+    const events = ['resize', 'orientationchange', 'fullscreenchange', 'webkitfullscreenchange'];
+    events.forEach((e) => window.addEventListener(e, mark));
+    return () => events.forEach((e) => window.removeEventListener(e, mark));
+  }, []);
+
+  const updateRatio = (slot, { width, height }) => {
+    if (!(width > 0 && height > 0)) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) return;
+    if (Date.now() - viewportChangedAt.current < 1000) return;
+    const ar = width / height;
+    // Пиксели округляются — мелкий дрейф пропорций не считаем изменением
+    setRatios((r) =>
+      r[slot] && Math.abs(r[slot] - ar) / r[slot] < 0.03 ? r : { ...r, [slot]: ar }
+    );
   };
 
   /* Страховка: если очередной плеер молчит (ошибка, совсем плохая сеть),
@@ -325,13 +357,13 @@ const ModulePage = () => {
               {(() => {
                 const kinescope = parseKinescope(module.videoUrl);
                 if (kinescope) {
-                  const aspect = moduleRatio ?? kinescope.aspectRatio;
+                  const aspect = ratios.intro ?? kinescope.aspectRatio;
                   return (
                     <div
                       className={styles.kinescope}
                       style={{
                         '--video-ar': aspect,
-                        '--video-maxh': aspect < 1 ? '62vh' : '46vh',
+                        '--video-maxw': aspect < 1 ? '400px' : '100%',
                       }}
                     >
                       {!settledSlots.has('intro') && (
@@ -348,9 +380,7 @@ const ModulePage = () => {
                           onReady={() => settleSlot('intro')}
                           onInitError={() => settleSlot('intro')}
                           onJSLoadError={() => settleSlot('intro')}
-                          onSizeChanged={({ width, height }) => {
-                            if (width > 0 && height > 0) setModuleRatio(width / height);
-                          }}
+                          onSizeChanged={(size) => updateRatio('intro', size)}
                         />
                       )}
                     </div>
@@ -380,6 +410,11 @@ const ModulePage = () => {
             </div>
 
             <div className={styles.lessons}>
+              {LESSONS_HEADING[module.title?.trim()] && module.lessons.length > 0 && (
+                <h2 className={`h2 multiline ${styles.lessonsHeading}`}>
+                  {LESSONS_HEADING[module.title?.trim()]}
+                </h2>
+              )}
               {module.lessons.map((lesson, i) => {
                 const done = completed.has(lesson.id);
                 const kinescope = parseKinescope(lesson.videoUrl);
@@ -403,7 +438,7 @@ const ModulePage = () => {
                             className={styles.kinescope}
                             style={{
                               '--video-ar': aspect,
-                              '--video-maxh': aspect < 1 ? '62vh' : '46vh',
+                              '--video-maxw': aspect < 1 ? '400px' : '100%',
                             }}
                           >
                             {!settledSlots.has(lesson.id) && (
@@ -420,15 +455,7 @@ const ModulePage = () => {
                                 onReady={() => settleSlot(lesson.id)}
                                 onInitError={() => settleSlot(lesson.id)}
                                 onJSLoadError={() => settleSlot(lesson.id)}
-                                onSizeChanged={({ width, height }) => {
-                                  if (!(width > 0 && height > 0)) return;
-                                  const ar = width / height;
-                                  setRatios((r) =>
-                                    Math.abs((r[lesson.id] ?? 0) - ar) < 0.01
-                                      ? r
-                                      : { ...r, [lesson.id]: ar }
-                                  );
-                                }}
+                                onSizeChanged={(size) => updateRatio(lesson.id, size)}
                                 onPlay={() => markStarted(lesson)}
                                 onDurationChange={({ duration }) =>
                                   trackDuration(lesson, duration)
