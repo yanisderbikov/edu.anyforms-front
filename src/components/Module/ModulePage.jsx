@@ -18,12 +18,19 @@ import styles from './ModulePage.module.css';
 /* Урок засчитывается, когда просмотрено столько ролика */
 const COMPLETE_AT = 0.95;
 
-/* В этих модулях уроки нумеруются с нуля (сверяется по названию модуля):
-   в базе номера всегда идут с единицы, сдвиг только при показе */
-const LESSONS_FROM_ZERO = new Set(['Заливка силикона и тест формы']);
+/* В этих модулях первый урок идёт без номера, а нумерация начинается
+   со второго (сверяется по названию модуля): в базе номера всегда идут
+   с единицы, сдвиг только при показе */
+const FIRST_LESSON_UNNUMBERED = new Set([
+  'Заливка силикона и тест формы',
+  'Изготовление контейнерной свечи',
+]);
 
-const lessonNumber = (module, index) =>
-  index + (LESSONS_FROM_ZERO.has(module.title?.trim()) ? 0 : 1);
+/* Номер урока для показа; null — урок без номера */
+const lessonNumber = (module, index) => {
+  if (!FIRST_LESSON_UNNUMBERED.has(module.title?.trim())) return index + 1;
+  return index === 0 ? null : index;
+};
 
 /* Заголовок перед первым уроком в отдельных модулях (сверяется по названию) */
 const LESSONS_HEADING = {
@@ -417,15 +424,19 @@ const ModulePage = () => {
               )}
               {module.lessons.map((lesson, i) => {
                 const done = completed.has(lesson.id);
+                const num = lessonNumber(module, i);
                 const kinescope = parseKinescope(lesson.videoUrl);
                 return (
                   <section key={lesson.id} className={styles.lesson}>
                     <div className={styles.lessonHead}>
-                      <span
-                        className={`${styles.lessonNum} ${done ? styles.lessonNumDone : ''}`}
-                      >
-                        {done ? '✓' : lessonNumber(module, i)}
-                      </span>
+                      {/* У урока без номера плашка появляется только галочкой */}
+                      {(done || num != null) && (
+                        <span
+                          className={`${styles.lessonNum} ${done ? styles.lessonNumDone : ''}`}
+                        >
+                          {done ? '✓' : num}
+                        </span>
+                      )}
                       <h2 className="h3">{lesson.title}</h2>
                     </div>
                     {kinescope ? (
